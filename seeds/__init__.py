@@ -1,0 +1,1 @@
+"""Atlas synthetic data generation."""

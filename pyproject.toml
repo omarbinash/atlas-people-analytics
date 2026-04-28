@@ -1,0 +1,81 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "atlas-people-analytics"
+version = "0.1.0"
+description = "Canonical employee record and People Analytics foundation on dbt + Snowflake"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Omar Abdalla" }]
+
+dependencies = [
+    # Core data
+    "snowflake-connector-python>=3.7.0",
+    "snowflake-sqlalchemy>=1.5.1",
+    "sqlalchemy>=2.0.25",
+    "pandas>=2.2.0",
+    "pyarrow>=15.0.0",
+    "python-dotenv>=1.0.0",
+
+    # Synthesis
+    "faker>=22.5.0",
+    "pyyaml>=6.0.1",
+
+    # Identity resolution (deterministic + ML residual)
+    "rapidfuzz>=3.6.0",
+    "unidecode>=1.3.8",
+
+    # API + Dashboard
+    "fastapi>=0.110.0",
+    "uvicorn[standard]>=0.27.0",
+    "streamlit>=1.31.0",
+
+    # dbt
+    "dbt-core>=1.7.0",
+    "dbt-snowflake>=1.7.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=4.1.0",
+    "ruff>=0.2.0",
+    "mypy>=1.8.0",
+    "pre-commit>=3.6.0",
+    "ipython>=8.20.0",
+]
+airflow = [
+    "apache-airflow>=2.8.0",
+    "apache-airflow-providers-snowflake>=5.3.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["atlas*", "seeds*", "identity_engine*", "api*", "dashboard*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "B", "UP", "SIM", "RUF"]
+ignore = ["E501"]  # handled by formatter
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = "-ra -q --strict-markers --strict-config"
+testpaths = ["tests"]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "snowflake: marks tests requiring a live Snowflake connection",
+]
+
+[tool.mypy]
+python_version = "3.11"
+warn_unused_configs = true
+warn_return_any = true
+disallow_untyped_defs = false
+ignore_missing_imports = true
