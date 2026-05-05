@@ -69,6 +69,25 @@ dbt build --select +dim_employee+ fct_workforce_daily
 
 Result: 195/195 dbt resources passed, producing 5,157 employee spell rows and 4,456,107 workforce daily rows from May 3, 2021 through May 5, 2026.
 
+## Current build: Phase 3 privacy layer
+
+Phase 3 now adds privacy-preserving people-analytics marts:
+
+- `workforce_headcount_daily` returns daily headcount by department, location, and employment type with below-k metrics suppressed.
+- `workforce_attrition_monthly` returns monthly attrition by the same HRBP dimensions, suppressing numerator, denominator, and rate when the month-start cohort is below k.
+- `privacy_suppression_summary` shows how many public mart rows were reportable vs suppressed.
+- `privacy_audit_log` is an incremental Snowflake table for future API/dashboard access events.
+- `privacy.sql` centralizes k-anonymity expressions and an `insert_privacy_audit_event` macro.
+
+Latest verification:
+
+```bash
+cd dbt_project
+dbt build --select +privacy_suppression_summary+ privacy_audit_log test_privacy_macros privacy__no_direct_employee_identifiers_in_people_analytics
+```
+
+Result: 235/235 dbt resources passed. With k=5, the public marts produced 610,740 daily headcount rows and 20,717 monthly attrition rows; suppressed rows stay visible for orientation but expose no exact small-cohort metrics.
+
 ## Architecture at a glance
 
 ```

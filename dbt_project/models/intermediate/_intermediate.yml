@@ -44,9 +44,10 @@ models:
       can choose the right anchor for each pass.
     tests:
       - dbt_utils.unique_combination_of_columns:
-          combination_of_columns:
-            - date_of_birth
-            - personal_email_local_part
+          arguments:
+            combination_of_columns:
+              - date_of_birth
+              - personal_email_local_part
     columns:
       - name: hris_person_key
         description: Surrogate hash of (date_of_birth, personal_email_local_part). Source-grain key.

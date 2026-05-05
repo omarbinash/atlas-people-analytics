@@ -91,6 +91,26 @@ dbt build --select +dim_employee+ fct_workforce_daily
 Latest result: 195/195 passed. The build produced 5,157 employee spell rows and
 4,456,107 workforce daily rows from 2021-05-03 through 2026-05-05.
 
+## Phase 3 privacy layer
+
+The People Analytics mart layer now includes:
+
+- `workforce_headcount_daily`: k-anonymous daily headcount by HRBP dimensions
+- `workforce_attrition_monthly`: k-anonymous monthly attrition by HRBP dimensions
+- `privacy_suppression_summary`: reportable vs suppressed row counts by public surface
+- `privacy_audit_log`: incremental table for future access events
+- `insert_privacy_audit_event`: macro for writing audit rows
+
+Validated command:
+
+```bash
+dbt build --select +privacy_suppression_summary+ privacy_audit_log test_privacy_macros privacy__no_direct_employee_identifiers_in_people_analytics
+```
+
+Latest result: 235/235 passed. With `k_anonymity_threshold = 5`, the public
+headcount mart produced 610,740 rows and the public attrition mart produced
+20,717 rows. Suppressed rows keep dimensions visible but exact metrics null.
+
 ## Layer structure
 
 | Layer | Materialization | Schema | Purpose |

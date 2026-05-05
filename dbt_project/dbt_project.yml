@@ -79,13 +79,6 @@ seeds:
   atlas:
     +schema: seeds
 
-# -----------------------------------------------------------------------------
-# Snapshot defaults — reserved for future source snapshots. Phase 2D's
-# dim_employee is built as a core mart from synthetic HRIS spell rows because
-# the raw feed already represents the available effective-dated history.
-# -----------------------------------------------------------------------------
-snapshots:
-  atlas:
-    +target_schema: snapshots
-    +strategy: timestamp
-    +updated_at: loaded_at
+# Snapshot configuration will be added when real dbt snapshots enter scope.
+# Phase 2D's dim_employee is built from synthetic HRIS spell rows because the
+# raw feed already represents the available effective-dated history.

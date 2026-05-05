@@ -43,8 +43,8 @@ Airflow, Workday HRIS, Ashby ATS).
 - ✅ **Phase 2A+2B** — dbt project scaffold + 6 staging models with 62 passing tests (tag: `phase-2b-complete`)
 - ✅ **Phase 2C** — IDENTITY MATCHER — three-pass deterministic + stewardship queue, 172 passing dbt resources
 - ✅ **Phase 2D** — dim_employee SCD2-style spell dimension + fct_workforce_daily snapshot, 195 passing dbt resources
-- ⏳ **Phase 3** — Privacy layer (k-anonymity macro, audit logging), NEXT
-- 🔜 **Phase 4** — Airflow + FastAPI + Streamlit
+- ✅ **Phase 3** — Privacy layer (k-anonymity macro, privacy marts, audit logging), 235 passing dbt resources
+- ⏳ **Phase 4** — Airflow + FastAPI + Streamlit, NEXT
 - 🔜 **Phase 5** — ML residual matching + walkthrough docs
 
 ## Phase 2C — implemented design
