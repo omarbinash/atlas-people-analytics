@@ -111,6 +111,20 @@ Latest result: 235/235 passed. With `k_anonymity_threshold = 5`, the public
 headcount mart produced 610,740 rows and the public attrition mart produced
 20,717 rows. Suppressed rows keep dimensions visible but exact metrics null.
 
+## Phase 4 service consumers
+
+The Airflow DAG, FastAPI metric service, and Streamlit dashboard live outside
+the dbt project, but they depend on these dbt surfaces:
+
+- `workforce_headcount_daily`
+- `workforce_attrition_monthly`
+- `privacy_suppression_summary`
+- `privacy_audit_log`
+
+The API reads only from `DBT_DEV_PEOPLE_ANALYTICS` by default and inserts
+access events into `privacy_audit_log`. Direct employee identifiers remain out
+of the public People Analytics schema.
+
 ## Layer structure
 
 | Layer | Materialization | Schema | Purpose |

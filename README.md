@@ -88,6 +88,31 @@ dbt build --select +privacy_suppression_summary+ privacy_audit_log test_privacy_
 
 Result: 235/235 dbt resources passed. With k=5, the public marts produced 610,740 daily headcount rows and 20,717 monthly attrition rows; suppressed rows stay visible for orientation but expose no exact small-cohort metrics.
 
+## Current build: Phase 4 operational layer
+
+Phase 4 now adds the runnable service surfaces around the privacy marts:
+
+- `airflow/dags/atlas_people_analytics.py` orchestrates dbt dependencies, staging, identity resolution, core marts, and privacy marts in order.
+- `api/metrics_service.py` exposes FastAPI endpoints for daily headcount, monthly attrition, privacy suppression summary, metadata, and health.
+- Every metric endpoint writes a best-effort row to `privacy_audit_log` with actor, purpose, filters, row counts, and suppressed-row counts.
+- `dashboard/app.py` provides a Streamlit HRBP dashboard over the API, using only privacy-safe mart fields.
+- The API composes SQL only against `ATLAS.<people_analytics_schema>` public marts and rejects unsafe configured identifiers.
+
+Local commands:
+
+```bash
+make api
+make dashboard
+make dag-test
+```
+
+Latest verification:
+
+```bash
+pytest tests/
+make dag-test
+```
+
 ## Architecture at a glance
 
 ```
@@ -178,7 +203,8 @@ make build
 # 6. Run all tests
 make test
 
-# 7. Launch the dashboard
+# 7. Launch the API and dashboard
+make api
 make dashboard
 ```
 

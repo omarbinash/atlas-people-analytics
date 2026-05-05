@@ -30,7 +30,7 @@ quality of the deliverable.
 - **Snowflake** as the warehouse (account `QLSJUMK-DC22948.us-east-1`)
 - **dbt-core 1.11+** with `dbt-snowflake` for transformations
 - **dbt_utils** as the only third-party dbt package
-- Future: Airflow for orchestration, FastAPI for the metric service, Streamlit for HRBP dashboard
+- **Airflow** for orchestration, **FastAPI** for the metric service, **Streamlit** for HRBP dashboard
 
 Do NOT introduce additional tools without proposing them first. The tech choices are
 deliberate to match Wealthsimple's stack (Redshift→Snowflake migration in progress, dbt,
@@ -44,8 +44,8 @@ Airflow, Workday HRIS, Ashby ATS).
 - ✅ **Phase 2C** — IDENTITY MATCHER — three-pass deterministic + stewardship queue, 172 passing dbt resources
 - ✅ **Phase 2D** — dim_employee SCD2-style spell dimension + fct_workforce_daily snapshot, 195 passing dbt resources
 - ✅ **Phase 3** — Privacy layer (k-anonymity macro, privacy marts, audit logging), 235 passing dbt resources
-- ⏳ **Phase 4** — Airflow + FastAPI + Streamlit, NEXT
-- 🔜 **Phase 5** — ML residual matching + walkthrough docs
+- ✅ **Phase 4** — Airflow DAG + FastAPI metric service + Streamlit HRBP dashboard
+- ⏳ **Phase 5** — ML residual matching + walkthrough docs, NEXT
 
 ## Phase 2C — implemented design
 
@@ -101,7 +101,7 @@ Snowflake schemas:
 - `ATLAS.DBT_DEV_staging` — staging views (built by dbt)
 - `ATLAS.DBT_DEV_intermediate` — Phase 2C will live here
 - `ATLAS.DBT_DEV_core` — Phase 2D dim_employee, fct_workforce_daily
-- `ATLAS.DBT_DEV_people_analytics` — Phase 2D analytics marts
+- `ATLAS.DBT_DEV_people_analytics` — Phase 3 privacy-safe analytics marts consumed by Phase 4
 
 ## Conventions
 

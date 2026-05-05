@@ -31,6 +31,7 @@ help:
 	@echo "Local serving:"
 	@echo "  dashboard        Launch the Streamlit HRBP dashboard"
 	@echo "  api              Launch the FastAPI metrics service"
+	@echo "  dag-test         Syntax-check the Airflow DAG"
 	@echo ""
 	@echo "Maintenance:"
 	@echo "  clean            Remove build artifacts and caches"
@@ -76,10 +77,13 @@ format:
 # Local serving
 # -----------------------------------------------------------------------------
 dashboard:
-	streamlit run dashboard/app.py
+	streamlit run dashboard/app.py --server.port $${ATLAS_DASHBOARD_PORT:-8501}
 
 api:
-	uvicorn api.metrics_service:app --reload --host 127.0.0.1 --port 8000
+	uvicorn api.metrics_service:app --reload --host $${ATLAS_API_HOST:-127.0.0.1} --port $${ATLAS_API_PORT:-8000}
+
+dag-test:
+	$(PYTHON) -m py_compile airflow/dags/atlas_people_analytics.py
 
 # -----------------------------------------------------------------------------
 # Maintenance
