@@ -96,6 +96,9 @@ def build_filters(metadata: dict[str, Any]) -> dict[str, Any]:
     department = option_filter("Department", metadata.get("departments", []))
     location = option_filter("Location", metadata.get("locations", []))
     employment_type = option_filter("Employment type", metadata.get("employment_types", []))
+    st.sidebar.divider()
+    st.sidebar.metric("Data through", max_snapshot.isoformat())
+    st.sidebar.metric("Public headcount rows", f"{metadata.get('headcount_row_count', 0):,}")
 
     return {
         "start_date": start_date.isoformat(),
@@ -126,6 +129,51 @@ def latest_attrition_rate(df: pd.DataFrame) -> float | None:
     latest_month = reportable["month_start_date"].max()
     latest = reportable.loc[reportable["month_start_date"] == latest_month, "attrition_rate"]
     return float(latest.mean())
+
+
+def suppression_rate(payload: dict[str, Any]) -> float:
+    row_count = payload.get("row_count") or 0
+    suppressed = payload.get("suppressed_row_count") or 0
+    if row_count == 0:
+        return 0.0
+    return suppressed / row_count
+
+
+def render_overview(
+    metadata: dict[str, Any],
+    headcount_payload: dict[str, Any],
+    attrition_payload: dict[str, Any],
+    suppression: pd.DataFrame,
+) -> None:
+    cols = st.columns(4)
+    cols[0].metric(
+        "Snapshot window",
+        f"{metadata.get('min_snapshot_date')} to {metadata.get('max_snapshot_date')}",
+    )
+    cols[1].metric("Departments", len(metadata.get("departments", [])))
+    cols[2].metric("Locations", len(metadata.get("locations", [])))
+    cols[3].metric("Employment types", len(metadata.get("employment_types", [])))
+
+    audit_cols = st.columns(3)
+    audit_cols[0].metric("Headcount query rows", f"{headcount_payload.get('row_count', 0):,}")
+    audit_cols[1].metric("Attrition query rows", f"{attrition_payload.get('row_count', 0):,}")
+    audit_cols[2].metric("Headcount suppression", f"{suppression_rate(headcount_payload):.1%}")
+
+    if not suppression.empty:
+        st.dataframe(
+            suppression[
+                [
+                    "privacy_surface",
+                    "date_grain",
+                    "row_count",
+                    "reportable_row_count",
+                    "suppressed_row_count",
+                    "suppressed_row_rate",
+                ]
+            ],
+            width="stretch",
+            hide_index=True,
+        )
 
 
 def render_dashboard(metadata: dict[str, Any], filters: dict[str, Any]) -> None:
@@ -164,7 +212,12 @@ def render_dashboard(metadata: dict[str, Any], filters: dict[str, Any]) -> None:
     metric_cols[2].metric("Suppressed rows", headcount_payload.get("suppressed_row_count", 0))
     metric_cols[3].metric("k threshold", metadata.get("k_anonymity_threshold", 5))
 
-    tab_headcount, tab_attrition, tab_privacy = st.tabs(["Headcount", "Attrition", "Privacy"])
+    tab_overview, tab_headcount, tab_attrition, tab_privacy = st.tabs(
+        ["Overview", "Headcount", "Attrition", "Privacy"]
+    )
+
+    with tab_overview:
+        render_overview(metadata, headcount_payload, attrition_payload, suppression)
 
     with tab_headcount:
         if headcount.empty:
@@ -177,7 +230,7 @@ def render_dashboard(metadata: dict[str, Any], filters: dict[str, Any]) -> None:
                 .set_index("snapshot_date")
             )
             st.line_chart(chart_data)
-            st.dataframe(headcount, use_container_width=True, hide_index=True)
+            st.dataframe(headcount, width="stretch", hide_index=True)
 
     with tab_attrition:
         if attrition.empty:
@@ -190,7 +243,7 @@ def render_dashboard(metadata: dict[str, Any], filters: dict[str, Any]) -> None:
                 .set_index("month_start_date")
             )
             st.line_chart(chart_data)
-            st.dataframe(attrition, use_container_width=True, hide_index=True)
+            st.dataframe(attrition, width="stretch", hide_index=True)
 
     with tab_privacy:
         if suppression.empty:
@@ -200,7 +253,7 @@ def render_dashboard(metadata: dict[str, Any], filters: dict[str, Any]) -> None:
                 ["reportable_row_count", "suppressed_row_count"]
             ]
             st.bar_chart(privacy_chart)
-            st.dataframe(suppression, use_container_width=True, hide_index=True)
+            st.dataframe(suppression, width="stretch", hide_index=True)
 
 
 def main() -> None:

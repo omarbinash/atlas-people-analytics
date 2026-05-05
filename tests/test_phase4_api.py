@@ -10,6 +10,7 @@ from api.metrics_service import (
     build_audit_insert,
     build_headcount_query,
     headcount_daily,
+    root,
 )
 from api.settings import AtlasSettings
 
@@ -33,6 +34,15 @@ def test_public_table_rejects_injected_schema() -> None:
 
     with pytest.raises(ValueError, match="simple Snowflake identifier"):
         settings.public_table("workforce_headcount_daily")
+
+
+def test_root_exposes_safe_service_index() -> None:
+    body = root()
+
+    assert body["health"] == "/health"
+    assert body["docs"] == "/docs"
+    assert body["metrics"]["daily_headcount"] == "/headcount/daily"
+    assert "k-anonymous" in body["privacy_note"]
 
 
 def test_headcount_query_uses_privacy_mart_and_bound_filters() -> None:

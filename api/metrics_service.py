@@ -75,6 +75,22 @@ def get_client(settings: SettingsDep) -> MetricsClient:
 ClientDep = Annotated[MetricsClient, Depends(get_client)]
 
 
+@app.get("/")
+def root() -> dict[str, Any]:
+    return {
+        "service": "atlas-metrics-api",
+        "docs": "/docs",
+        "health": "/health",
+        "metadata": "/metadata",
+        "metrics": {
+            "daily_headcount": "/headcount/daily",
+            "monthly_attrition": "/attrition/monthly",
+            "suppression_summary": "/privacy/suppression-summary",
+        },
+        "privacy_note": "Metric endpoints read only from k-anonymous People Analytics marts.",
+    }
+
+
 def _where_clause(predicates: list[str]) -> str:
     if not predicates:
         return ""

@@ -210,14 +210,8 @@ make dashboard
 
 ## Documentation
 
-- [The Problem in Detail](docs/01-the-problem.md)
-- [Architecture & Design Decisions](docs/02-architecture.md)
-- [Identity Resolution: How the Matching Works](docs/03-identity-resolution.md)
-- [SCD2 and Point-in-Time Correctness](docs/04-scd2-and-snapshots.md)
-- [Privacy by Design](docs/05-privacy-design.md)
-- [Walkthroughs](docs/walkthroughs/) — five real edge cases traced end-to-end
-- [Stretch: ML Residual Matching](docs/07-stretch-ml-residuals.md)
-- [AI Collaboration Log](docs/08-ai-collaboration.md) — honest log of where AI tools helped
+- [Demo Script](docs/00-demo-script.md)
+- [Identity Drift Recovery Walkthrough](docs/walkthroughs/identity-drift-example.md)
 
 ## License
 
