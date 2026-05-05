@@ -1,0 +1,132 @@
+version: 2
+
+models:
+
+  # ===========================================================================
+  - name: stg_hris__employees
+    description: |
+      Cleaned 1:1 view of RAW_HRIS_EMPLOYEES. One row per employment spell.
+      Names are lowercased and trimmed; original casing preserved in *_original
+      columns for display purposes.
+    columns:
+      - name: hris_employee_id
+        description: "Primary key. Note: a single person may have multiple HRIS_EMPLOYEE_IDs across rehires."
+        tests: [not_null, unique]
+      - name: legal_first_name
+        description: Lowercase, trimmed legal first name. Use for cross-system matching.
+        tests: [not_null]
+      - name: legal_last_name
+        description: Lowercase, trimmed legal last name.
+        tests: [not_null]
+      - name: preferred_name
+        description: Lowercase preferred first name, NULL if not provided.
+      - name: work_email
+        description: Company email address. Locked at hire, rarely updated.
+      - name: work_email_local_part
+        description: Email username part (before '@'). Stable identity anchor.
+      - name: hire_date
+        tests: [not_null]
+      - name: employment_status
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['ACTIVE', 'TERMINATED', 'ON_LEAVE']
+      - name: employment_type
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['FTE', 'CONTRACTOR', 'PART_TIME']
+
+  # ===========================================================================
+  - name: stg_ats__candidates
+    description: |
+      Cleaned 1:1 view of RAW_ATS_CANDIDATES. One row per offer accepted.
+      Uses preferred name and personal email.
+    columns:
+      - name: ats_candidate_id
+        tests: [not_null, unique]
+      - name: preferred_first_name
+        tests: [not_null]
+      - name: last_name
+        tests: [not_null]
+      - name: email_local_part
+        description: Email username (before '@'). Used to match candidates back to hired employees.
+      - name: sourced_from
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['LinkedIn', 'Referral', 'Career Site', 'Indeed', 'Recruiter']
+
+  # ===========================================================================
+  - name: stg_payroll__records
+    description: |
+      Cleaned 1:1 view of RAW_PAYROLL_RECORDS. One row per pay period (~monthly).
+      Uses LEGAL name. Note: payroll often LAGS HRIS on name updates — same
+      person may appear here under pre-marriage name long after HRIS updated.
+      SIN_LAST_4 is sensitive — restrict access at marts layer.
+    columns:
+      - name: payroll_record_id
+        tests: [not_null, unique]
+      - name: employee_payroll_id
+        description: |
+          Payroll's internal ID, separate from HRIS_EMPLOYEE_ID. Stable across
+          pay periods within a single employment spell — useful identity anchor.
+        tests: [not_null]
+      - name: legal_first_name
+        tests: [not_null]
+      - name: legal_last_name
+        tests: [not_null]
+      - name: pay_period_start
+        tests: [not_null]
+      - name: pay_period_end
+        tests: [not_null]
+
+  # ===========================================================================
+  - name: stg_crm__sales_reps
+    description: |
+      Cleaned 1:1 view of RAW_CRM_SALES_REPS. One row per sales/support
+      employment spell. Uses preferred name.
+    columns:
+      - name: crm_user_id
+        tests: [not_null, unique]
+      - name: preferred_first_name
+        tests: [not_null]
+      - name: last_name
+        tests: [not_null]
+      - name: role
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['SALES_REP', 'SUPPORT_AGENT', 'MARKETING']
+
+  # ===========================================================================
+  - name: stg_dms__users
+    description: |
+      Cleaned 1:1 view of RAW_DMS_USERS. Uses SHORTENED first name (typed in
+      once on day one, never updated). Hire date can drift ±1-3 days from HRIS.
+    columns:
+      - name: dms_user_id
+        tests: [not_null, unique]
+      - name: short_first_name
+        tests: [not_null]
+      - name: last_name
+        tests: [not_null]
+      - name: hire_date_dms
+        description: Local hire date in DMS. May drift ±1-3 days from HRIS.HIRE_DATE.
+
+  # ===========================================================================
+  - name: stg_erp__users
+    description: |
+      Cleaned 1:1 view of RAW_ERP_USERS. ~10% of rows have linked_dms_user_id
+      NULL — modeling real-world manual data drift.
+    columns:
+      - name: erp_user_id
+        tests: [not_null, unique]
+      - name: linked_dms_user_id
+        description: |
+          FK to stg_dms__users.dms_user_id. Nullable: ~10% of rows have a
+          broken link, exposed via has_broken_dms_link flag.
+      - name: has_broken_dms_link
+        description: True when linked_dms_user_id is null. Useful for orphan-detection queries.
+        tests:
+          - not_null

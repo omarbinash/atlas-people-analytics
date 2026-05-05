@@ -1,0 +1,7 @@
+# dbt artifacts
+target/
+dbt_packages/
+logs/
+
+# Profile (should be in ~/.dbt/, never here, but safety)
+profiles.yml

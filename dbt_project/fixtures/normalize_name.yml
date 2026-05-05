@@ -1,0 +1,106 @@
+# =============================================================================
+# normalize_name macro spec — written BEFORE the macro implementation
+# =============================================================================
+# This file is the human-readable spec. The executable form lives at
+# `tests/macros/test_normalize_name.sql` and must mirror these cases exactly.
+#
+# Ground-truth Python equivalent: `seeds/name_strategies.py::normalize_name_for_matching`
+#
+# Snowflake limitation: pure-SQL implementation uses TRANSLATE for accent-folding
+# of Latin-1 Supplement + Latin Extended-A characters (covers French, Spanish,
+# Italian, Portuguese, Polish, Czech). It CANNOT transliterate non-Latin scripts
+# (Arabic, CJK). The Python version uses `unidecode` which fully transliterates.
+# For non-Latin inputs the SQL macro returns an empty string after non-alpha
+# stripping; the Python function returns a Latin transliteration.
+#
+# This divergence is DELIBERATE — the matcher does not match across scripts via
+# name root. Cross-script identity resolution relies on email-domain anchors
+# (Pass 3), which the synthesizer guarantees are unidecode-transliterated and
+# therefore Latin-script regardless of the source name's script.
+#
+# Test scope: all cases below MUST hold on the Snowflake side. Python parity is
+# only asserted for ASCII + Latin-Extended inputs (cases 1-9, 12).
+# =============================================================================
+
+cases:
+
+  - id: 1
+    description: Mixed case lowercased
+    input: "Robert"
+    expected: "robert"
+
+  - id: 2
+    description: Surrounding whitespace trimmed
+    input: "  Robert  "
+    expected: "robert"
+
+  - id: 3
+    description: Single accented Latin char decomposed and stripped
+    input: "Édouard"
+    expected: "edouard"
+
+  - id: 4
+    description: Multiple accents within one name
+    input: "Anaïs"
+    expected: "anais"
+
+  - id: 5
+    description: Hyphens stripped (compound first name)
+    input: "Mary-Jane"
+    expected: "maryjane"
+
+  - id: 6
+    description: Apostrophes stripped (Irish-style surname)
+    input: "O'Brien"
+    expected: "obrien"
+
+  - id: 7
+    description: Internal whitespace stripped (compound first name)
+    input: "Jean Paul"
+    expected: "jeanpaul"
+
+  - id: 8
+    description: Tilde-n decomposed (Spanish surname)
+    input: "Núñez"
+    expected: "nunez"
+
+  - id: 9
+    description: Cedilla decomposed (French given name)
+    input: "François"
+    expected: "francois"
+
+  - id: 10
+    description: Empty string passes through as empty
+    input: ""
+    expected: ""
+
+  - id: 11
+    description: Null passes through as null
+    input: null
+    expected: null
+
+  - id: 12
+    description: Numerals stripped (defensive — names should not contain digits)
+    input: "Robert3"
+    expected: "robert"
+
+  - id: 13
+    description: |
+      Non-Latin script (Chinese) — documented divergence from Python.
+      Python unidecode transliterates "张伟" -> "zhangwei". The pure-SQL
+      macro strips all non-Latin characters, returning empty string. The
+      matcher relies on email anchors for these cases, not name root.
+    input: "张伟"
+    expected: ""
+
+  - id: 14
+    description: |
+      Non-Latin script (Arabic) — same divergence as case 13. Python
+      unidecode transliterates "محمد" -> "mhmd". Pure-SQL returns empty.
+    input: "محمد"
+    expected: ""
+
+  - id: 15
+    description: Polish accent (Latin Extended-A) — l-stroke
+    input: "Łukasz"
+    expected: "lukasz"

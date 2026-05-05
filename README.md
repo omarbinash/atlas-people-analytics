@@ -24,12 +24,32 @@ Atlas is the open, reference implementation of that same pattern, rebuilt in mod
 
 ## What it does
 
-1. **Ingests** five realistic source systems with the kind of name and ID drift that real HR data exhibits — legal names, preferred names, shortened names, marriage name changes, contractor-to-FTE conversions, terminations and rehires, and inter-system ID schema mismatches.
+1. **Ingests** six realistic source systems with the kind of name and ID drift that real HR data exhibits — legal names, preferred names, shortened names, marriage name changes, contractor-to-FTE conversions, terminations and rehires, and inter-system ID schema mismatches.
 2. **Resolves identity** through a deterministic matching layer with explicit, auditable rules — not a black-box ML model. (An optional ML residual layer handles the long tail.)
 3. **Produces a canonical `dim_employee`** as a Type 2 slowly-changing dimension with full effective-dating, so point-in-time queries return correct answers.
 4. **Snapshots the workforce daily** into a date-spine fact table that supports any "what was true on date X" question — headcount, tenure, attrition cohort.
 5. **Exposes metrics through a privacy-aware semantic layer** — k-anonymity guards on small cohorts, field whitelisting, and audit logging.
 6. **Validates everything** through dbt tests, a chaos-corruption test suite, custom SCD2 contiguity tests, and a 7-job CI/CD pipeline.
+
+## Current build: Phase 2C identity matcher
+
+Phase 2C now builds the deterministic identity-resolution layer in `dbt_project/models/intermediate/`:
+
+- `int_identity_source_nodes` standardizes HRIS, ATS, payroll-spell, CRM, and DMS/ERP records onto a common matching grain.
+- `int_identity_pass_1_hard_anchors` resolves exact personal-email and work-email-local-part anchors.
+- `int_identity_pass_2_name_dob_hire` evaluates normalized first-name-root + last-name + hire-date candidates, but only auto-merges when DOB is present.
+- `int_identity_pass_3_email_domain` recovers company-domain + email last-name-token matches with hire-date proximity and a uniqueness gate.
+- `int_canonical_person` emits one stable `canonical_person_id` per HRIS-distinct person.
+- `int_stewardship_queue` captures every non-HRIS source identity that did not safely auto-merge.
+
+Latest verification:
+
+```bash
+cd dbt_project
+dbt build --select +int_canonical_person+ int_stewardship_queue
+```
+
+Result: 172/172 dbt resources passed, producing 5,000 canonical people and 6,985 stewardship queue records. Payroll is intentionally routed to stewardship in this phase because the current synthetic payroll feed has SIN_LAST_4 but no DOB/email bridge, and the generator makes SIN_LAST_4 unstable across pay periods. That is a deliberate false-negative-over-false-positive choice for HR data.
 
 ## Architecture at a glance
 
