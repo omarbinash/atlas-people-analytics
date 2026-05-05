@@ -1,0 +1,78 @@
+version: 2
+
+models:
+
+  # =========================================================================
+  - name: dim_employee
+    description: |
+      Phase 2D core SCD2-style employee dimension. One row per canonical person
+      employment spell, effective-dated for point-in-time joins.
+    columns:
+      - name: employee_sk
+        description: Surrogate key for this canonical person employment spell.
+        tests:
+          - not_null
+          - unique
+      - name: canonical_person_id
+        tests: [not_null]
+      - name: hris_person_key
+        tests: [not_null]
+      - name: hris_employee_id
+        tests:
+          - not_null
+          - unique
+      - name: effective_start_date
+        tests: [not_null]
+      - name: effective_end_date
+        tests: [not_null]
+      - name: is_current_record
+        tests: [not_null]
+      - name: employment_spell_number
+        tests: [not_null]
+      - name: source_employment_status
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['ACTIVE', 'TERMINATED', 'ON_LEAVE']
+      - name: employment_type
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['FTE', 'CONTRACTOR', 'PART_TIME']
+      - name: is_open_ended_spell
+        tests: [not_null]
+
+  # =========================================================================
+  - name: fct_workforce_daily
+    description: |
+      Phase 2D daily point-in-time workforce snapshot. One row per employee
+      spell per date from hire through termination/as-of date. Headcount
+      metrics should filter is_active_on_date = true.
+    columns:
+      - name: daily_workforce_key
+        tests:
+          - not_null
+          - unique
+      - name: snapshot_date
+        tests: [not_null]
+      - name: employee_sk
+        tests: [not_null]
+      - name: canonical_person_id
+        tests: [not_null]
+      - name: hris_employee_id
+        tests: [not_null]
+      - name: is_active_on_date
+        tests: [not_null]
+      - name: is_hire_date
+        tests: [not_null]
+      - name: is_termination_date
+        tests: [not_null]
+      - name: tenure_days
+        tests: [not_null]
+      - name: employee_day_count
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [1]

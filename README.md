@@ -51,6 +51,24 @@ dbt build --select +int_canonical_person+ int_stewardship_queue
 
 Result: 172/172 dbt resources passed, producing 5,000 canonical people and 6,985 stewardship queue records. Payroll is intentionally routed to stewardship in this phase because the current synthetic payroll feed has SIN_LAST_4 but no DOB/email bridge, and the generator makes SIN_LAST_4 unstable across pay periods. That is a deliberate false-negative-over-false-positive choice for HR data.
 
+## Current build: Phase 2D core marts
+
+Phase 2D now adds the first point-in-time marts in `dbt_project/models/marts/core/`:
+
+- `dim_employee` is an SCD2-style employee dimension at HRIS employment-spell grain, keyed by `canonical_person_id`.
+- `fct_workforce_daily` emits one employee-spell row per calendar date from hire through termination/as-of date.
+- Termination dates are retained as non-active event rows, so headcount uses `is_active_on_date = true` while attrition can count `is_termination_date = true`.
+- Full DOB and SIN_LAST_4 are not exposed in the core marts.
+
+Latest verification:
+
+```bash
+cd dbt_project
+dbt build --select +dim_employee+ fct_workforce_daily
+```
+
+Result: 195/195 dbt resources passed, producing 5,157 employee spell rows and 4,456,107 workforce daily rows from May 3, 2021 through May 5, 2026.
+
 ## Architecture at a glance
 
 ```

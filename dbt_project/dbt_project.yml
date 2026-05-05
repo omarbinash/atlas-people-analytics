@@ -80,7 +80,9 @@ seeds:
     +schema: seeds
 
 # -----------------------------------------------------------------------------
-# Snapshot defaults — SCD2 dim_employee will live here
+# Snapshot defaults — reserved for future source snapshots. Phase 2D's
+# dim_employee is built as a core mart from synthetic HRIS spell rows because
+# the raw feed already represents the available effective-dated history.
 # -----------------------------------------------------------------------------
 snapshots:
   atlas:

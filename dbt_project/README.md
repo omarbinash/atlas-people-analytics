@@ -75,6 +75,22 @@ DMS/ERP 4,298. Queued nodes: ATS 196, CRM 237, DMS/ERP 1,395, payroll 5,157.
 Payroll is queued because the current synthetic payroll feed does not expose a
 safe DOB/email bridge; SIN_LAST_4 is not used as a matcher input.
 
+## Phase 2D core marts
+
+The core mart layer now includes:
+
+- `dim_employee`: one SCD2-style row per canonical person employment spell
+- `fct_workforce_daily`: one employee-spell row per day for point-in-time headcount and attrition
+
+Validated command:
+
+```bash
+dbt build --select +dim_employee+ fct_workforce_daily
+```
+
+Latest result: 195/195 passed. The build produced 5,157 employee spell rows and
+4,456,107 workforce daily rows from 2021-05-03 through 2026-05-05.
+
 ## Layer structure
 
 | Layer | Materialization | Schema | Purpose |
