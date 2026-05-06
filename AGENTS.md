@@ -1,4 +1,4 @@
-# Atlas — Project Context for Claude Code
+# Atlas — Project Context for Codex
 
 ## What this project is
 

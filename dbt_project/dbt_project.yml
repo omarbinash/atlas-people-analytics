@@ -1,0 +1,84 @@
+name: 'atlas'
+version: '0.1.0'
+config-version: 2
+
+# This profile must exist in ~/.dbt/profiles.yml and reference your Snowflake creds
+profile: 'atlas'
+
+# Folder paths (relative to dbt_project.yml)
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+  - "logs"
+
+# -----------------------------------------------------------------------------
+# Variables — overridable from CLI with `dbt run --vars '{...}'`
+# -----------------------------------------------------------------------------
+vars:
+  # Privacy: minimum cohort size for any aggregated metric to be returned.
+  # Cohorts smaller than this are suppressed in the privacy-preserving views.
+  k_anonymity_threshold: 5
+
+  # Source schema in Snowflake (where the synthesizer loaded the raw tables)
+  raw_schema: 'RAW'
+
+  # Date used as "today" for snapshot tables. Override for backfills.
+  # Defaults to current date in macro logic.
+  snapshot_as_of_date: null
+
+# -----------------------------------------------------------------------------
+# Model defaults — staging is views (cheap, always fresh), marts are tables
+# (cached, fast for downstream queries). Intermediate is ephemeral by default
+# but can be materialized as table for inspection during development.
+# -----------------------------------------------------------------------------
+models:
+  atlas:
+    # Default: every model is a view unless overridden
+    +materialized: view
+
+    staging:
+      +materialized: view
+      +schema: staging
+      # +tags: ['staging']  # uncomment if/when we want to filter selectively
+      hris:
+        +tags: ['staging', 'hris']
+      ats:
+        +tags: ['staging', 'ats']
+      payroll:
+        +tags: ['staging', 'payroll']
+      crm:
+        +tags: ['staging', 'crm']
+      dms:
+        +tags: ['staging', 'dms']
+      erp:
+        +tags: ['staging', 'erp']
+
+    intermediate:
+      +materialized: table
+      +schema: intermediate
+
+    marts:
+      +materialized: table
+      core:
+        +schema: core
+      people_analytics:
+        +schema: people_analytics
+
+# -----------------------------------------------------------------------------
+# Seed defaults — for any reference CSVs we add later (e.g., NICKNAME_MAP)
+# -----------------------------------------------------------------------------
+seeds:
+  atlas:
+    +schema: seeds
+
+# Snapshot configuration will be added when real dbt snapshots enter scope.
+# Phase 2D's dim_employee is built from synthetic HRIS spell rows because the
+# raw feed already represents the available effective-dated history.

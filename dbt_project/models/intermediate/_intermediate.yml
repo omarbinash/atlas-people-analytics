@@ -1,0 +1,297 @@
+version: 2
+
+models:
+
+  # =========================================================================
+  - name: int_dms_erp_unified
+    description: |
+      Phase 2C, Pass 0. Bipartite graph-merge of DMS users and ERP users via
+      the hard FK ERP.LINKED_DMS_USER_ID -> DMS.DMS_USER_ID. One row per
+      unified DMS+ERP person, with a topology classification and array of
+      source-system attributes.
+    columns:
+      - name: dms_erp_person_key
+        description: Surrogate hash of (dms_user_id, erp_user_id). Stable across reruns.
+        tests:
+          - not_null
+          - unique
+      - name: dms_user_id
+        description: Nullable — NULL for ERP_ONLY_BROKEN_LINK topology. Uniqueness enforced where not null by tests/intermediate/.
+      - name: erp_user_id
+        description: Nullable — NULL for DMS_ONLY topology. Uniqueness enforced where not null by tests/intermediate/.
+      - name: merge_topology
+        description: Classification of which source systems contributed to this person.
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['DMS_AND_ERP', 'DMS_ONLY', 'ERP_ONLY_BROKEN_LINK']
+      - name: has_dms
+        tests: [not_null]
+      - name: has_erp
+        tests: [not_null]
+      - name: has_broken_link
+        description: TRUE iff has_erp AND ERP.linked_dms_user_id is NULL.
+        tests: [not_null]
+
+  # =========================================================================
+  - name: int_hris_persons
+    description: |
+      Phase 2C, Step 1 prep. Collapses HRIS rehires + contractor-to-FTE
+      transitions into one row per HRIS-distinct person, grouped by
+      (date_of_birth, personal_email_local_part). Exposes both canonical
+      (earliest-spell) and current (latest-spell) snapshots so the matcher
+      can choose the right anchor for each pass.
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - date_of_birth
+              - personal_email_local_part
+    columns:
+      - name: hris_person_key
+        description: Surrogate hash of (date_of_birth, personal_email_local_part). Source-grain key.
+        tests:
+          - not_null
+          - unique
+      - name: date_of_birth
+        tests: [not_null]
+      - name: personal_email_local_part
+        tests: [not_null]
+      - name: canonical_legal_first_name
+        description: legal_first_name from the earliest-hire spell. Anchors the cross-source canonical_person_id.
+        tests: [not_null]
+      - name: canonical_legal_last_name
+        description: legal_last_name from the earliest-hire spell. Pre any marriage drift.
+        tests: [not_null]
+      - name: canonical_hire_date
+        tests: [not_null]
+      - name: spell_count
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= 1"
+      - name: hris_employee_ids
+        description: Array of all HRIS_EMPLOYEE_IDs that belong to this person across rehires.
+        tests: [not_null]
+      - name: has_rehires
+        tests: [not_null]
+      - name: has_name_change_marriage
+        description: TRUE iff canonical_legal_last_name differs from current_legal_last_name.
+        tests: [not_null]
+      - name: work_email_local_part
+        description: Constant across all spells of a given person. Pass 1 anchor.
+
+  # =========================================================================
+  - name: int_payroll_spells
+    description: |
+      Phase 2C, Step 1 prep. Collapses ~153K monthly pay-period rows into
+      ~5K spell-grain rows, grouped by EMPLOYEE_PAYROLL_ID. Exposes first-
+      observed and most-recent legal name snapshots, plus pay-period
+      aggregates. Reduces downstream join cardinality from 153K x N to
+      5K x N.
+    columns:
+      - name: payroll_spell_key
+        description: Surrogate hash of EMPLOYEE_PAYROLL_ID.
+        tests:
+          - not_null
+          - unique
+      - name: employee_payroll_id
+        description: |
+          Stable spell-identity column. Embeds canonical person_id in the
+          synthesizer ("oracle leak") — used here ONLY for grouping equality,
+          NEVER parsed for cross-source matching.
+        tests:
+          - not_null
+          - unique
+      - name: first_observed_legal_first_name
+        tests: [not_null]
+      - name: first_observed_legal_last_name
+        tests: [not_null]
+      - name: first_pay_period_start
+        tests: [not_null]
+      - name: most_recent_pay_period_end
+        tests: [not_null]
+      - name: pay_period_count
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= 1"
+      - name: gross_amount_cad_total
+        tests: [not_null]
+      - name: hours_worked_total
+        tests: [not_null]
+      - name: has_intra_spell_last_name_change
+        tests: [not_null]
+      - name: sin_last_4_distinct_count
+        description: |
+          Diagnostic only — count of distinct SIN_LAST_4 values seen across
+          this spell's pay periods. The synthesizer regenerates SIN per
+          period, so this typically equals pay_period_count. NEVER use as a
+          matching anchor.
+
+  # =========================================================================
+  - name: int_identity_source_nodes
+    description: |
+      Phase 2C common identity-node grain used by the deterministic matcher.
+      One row per HRIS person, ATS candidate, payroll spell, CRM user, and
+      unified DMS/ERP topology component.
+    columns:
+      - name: source_record_key
+        description: Stable source-scoped identity key, prefixed with source system.
+        tests:
+          - not_null
+          - unique
+      - name: source_system
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['HRIS', 'ATS', 'PAYROLL', 'CRM', 'DMS_ERP']
+      - name: source_primary_id
+        tests: [not_null]
+      - name: source_first_name_root
+        description: Normalized first-name root after nickname mapping.
+      - name: source_last_name_norm
+        description: Normalized last name for deterministic comparisons.
+
+  # =========================================================================
+  - name: int_identity_pass_1_hard_anchors
+    description: |
+      Phase 2C deterministic Pass 1. Matches non-HRIS source identities to HRIS
+      using exact personal-email or work-email-local-part anchors. Payroll
+      SIN_LAST_4 is deliberately not used because this synthetic feed lacks a
+      safe DOB+SIN bridge.
+    columns:
+      - name: source_record_key
+        tests: [not_null]
+      - name: hris_person_key
+        tests: [not_null]
+      - name: match_pass
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [1]
+      - name: match_score
+        tests: [not_null]
+      - name: candidate_hris_person_count
+        tests: [not_null]
+      - name: auto_merge_qualified
+        tests: [not_null]
+
+  # =========================================================================
+  - name: int_identity_pass_2_name_dob_hire
+    description: |
+      Phase 2C deterministic Pass 2. Evaluates normalized first-name-root +
+      last-name + hire-date proximity candidates, and only auto-merges when the
+      source also exposes exact DOB. Current non-HRIS synthetic feeds generally
+      lack DOB, so these rows mainly feed stewardship evidence.
+    columns:
+      - name: source_record_key
+        tests: [not_null]
+      - name: hris_person_key
+        tests: [not_null]
+      - name: match_pass
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [2]
+      - name: match_score
+        tests: [not_null]
+      - name: candidate_hris_person_count
+        tests: [not_null]
+      - name: auto_merge_qualified
+        tests: [not_null]
+
+  # =========================================================================
+  - name: int_identity_pass_3_email_domain
+    description: |
+      Phase 2C deterministic Pass 3. Recovers company-email-domain + last-name
+      token matches when exact email local parts fail, gated by hire-date
+      proximity and a unique HRIS candidate.
+    columns:
+      - name: source_record_key
+        tests: [not_null]
+      - name: hris_person_key
+        tests: [not_null]
+      - name: match_pass
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [3]
+      - name: match_score
+        tests: [not_null]
+      - name: candidate_hris_person_count
+        tests: [not_null]
+      - name: auto_merge_qualified
+        tests: [not_null]
+
+  # =========================================================================
+  - name: int_canonical_person
+    description: |
+      Phase 2C canonical identity output. One row per HRIS-distinct person with
+      stable canonical_person_id and arrays of deterministically resolved
+      source-system identifiers.
+    columns:
+      - name: canonical_person_id
+        tests:
+          - not_null
+          - unique
+      - name: hris_person_key
+        tests:
+          - not_null
+          - unique
+      - name: hris_employee_ids
+        tests: [not_null]
+      - name: current_hris_employee_id
+        tests: [not_null]
+      - name: date_of_birth
+        tests: [not_null]
+      - name: canonical_hire_date
+        tests: [not_null]
+      - name: matched_external_source_node_count
+        tests: [not_null]
+      - name: matched_external_source_system_count
+        tests: [not_null]
+      - name: payroll_spell_count
+        description: |
+          Count of payroll spells auto-merged to this canonical person. Expected
+          to be zero until the payroll feed gains a safe DOB/email bridge.
+        tests: [not_null]
+
+  # =========================================================================
+  - name: int_stewardship_queue
+    description: |
+      Phase 2C manual adjudication surface. One row per non-HRIS source identity
+      that did not qualify for deterministic auto-merge, with best candidate
+      evidence and a stewardship reason.
+    columns:
+      - name: stewardship_queue_id
+        tests:
+          - not_null
+          - unique
+      - name: source_record_key
+        tests:
+          - not_null
+          - unique
+      - name: source_system
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['ATS', 'PAYROLL', 'CRM', 'DMS_ERP']
+      - name: stewardship_reason
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - 'NO_DETERMINISTIC_CANDIDATE'
+                  - 'AMBIGUOUS_CANDIDATES'
+                  - 'BELOW_AUTO_MATCH_THRESHOLD'
+                  - 'MANUAL_REVIEW_REQUIRED'

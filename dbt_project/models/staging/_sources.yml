@@ -1,0 +1,208 @@
+version: 2
+
+sources:
+  - name: atlas_raw
+    description: |
+      The six raw operational source tables, populated by `seeds/synthesize.py`.
+      Each table mirrors a different real-world operational system, with deliberately
+      drifted name and identity representations.
+    database: ATLAS
+    schema: RAW
+    loader: 'atlas_synthesize'
+
+    # Source-level freshness check.
+    config:
+      freshness:
+        warn_after: { count: 7, period: day }
+        error_after: { count: 30, period: day }
+      loaded_at_field: LOADED_AT
+
+    tables:
+
+      # -----------------------------------------------------------------------
+      # HRIS (BambooHR-shape) — system of record for employment status
+      # -----------------------------------------------------------------------
+      - name: RAW_HRIS_EMPLOYEES
+        description: |
+          BambooHR-style HRIS export. One row per employment spell. Rehires
+          generate a NEW HRIS_EMPLOYEE_ID — a critical part of the canonical-record
+          problem this project solves.
+        columns:
+          - name: HRIS_EMPLOYEE_ID
+            description: Primary key. Unique to one employment spell.
+            tests:
+              - not_null
+              - unique
+          - name: LEGAL_FIRST_NAME
+            description: Legal first name (matches government ID / T4).
+            tests: [not_null]
+          - name: LEGAL_LAST_NAME
+            description: Legal last name. Updates on marriage if HR is notified.
+            tests: [not_null]
+          - name: PREFERRED_NAME
+            description: Optional preferred first name. Often differs from legal.
+          - name: DATE_OF_BIRTH
+            description: Used by identity matcher for cross-system disambiguation.
+          - name: PERSONAL_EMAIL
+            description: "Personal email — useful as identity anchor."
+          - name: WORK_EMAIL
+            description: |
+              Company email. Locked at hire and rarely updated, even after
+              marriage. The local part is a stable identity anchor.
+          - name: HIRE_DATE
+            description: Date of this employment spell's start.
+            tests: [not_null]
+          - name: TERMINATION_DATE
+            description: Termination date. NULL means currently active.
+          - name: EMPLOYMENT_STATUS
+            tests:
+              - accepted_values:
+                  arguments:
+                    values: ['ACTIVE', 'TERMINATED', 'ON_LEAVE']
+          - name: EMPLOYMENT_TYPE
+            tests:
+              - accepted_values:
+                  arguments:
+                    values: ['FTE', 'CONTRACTOR', 'PART_TIME']
+          - name: DEPARTMENT
+          - name: JOB_TITLE
+          - name: MANAGER_HRIS_ID
+            description: HRIS ID of manager. Self-referential; nullable for top-level.
+          - name: LOCATION
+
+      # -----------------------------------------------------------------------
+      # ATS (Greenhouse/Ashby-shape) — application records, captured pre-hire
+      # -----------------------------------------------------------------------
+      - name: RAW_ATS_CANDIDATES
+        description: |
+          ATS application records. One row per offer accepted (i.e., per hire
+          and per rehire). Uses preferred name, not legal.
+        columns:
+          - name: ATS_CANDIDATE_ID
+            tests: [not_null, unique]
+          - name: PREFERRED_FIRST_NAME
+            tests: [not_null]
+          - name: LAST_NAME
+            tests: [not_null]
+          - name: EMAIL
+            description: Personal email used during application.
+          - name: PHONE
+          - name: APPLICATION_DATE
+          - name: OFFER_ACCEPTED_DATE
+          - name: SOURCED_FROM
+            tests:
+              - accepted_values:
+                  arguments:
+                    values: ['LinkedIn', 'Referral', 'Career Site', 'Indeed', 'Recruiter']
+          - name: REQUISITION_DEPARTMENT
+          - name: REQUISITION_JOB_TITLE
+
+      # -----------------------------------------------------------------------
+      # Payroll (ADP-shape) — monthly records, lags HRIS on name updates
+      # -----------------------------------------------------------------------
+      - name: RAW_PAYROLL_RECORDS
+        description: |
+          ADP-shape monthly payroll records. Uses legal name, but does NOT
+          always pick up name changes (marriage, etc.) — a deliberate drift case.
+          Includes SIN_LAST_4 as sensitive identity anchor.
+        columns:
+          - name: PAYROLL_RECORD_ID
+            tests: [not_null, unique]
+          - name: EMPLOYEE_PAYROLL_ID
+            description: |
+              Payroll's internal employee ID, separate from HRIS_EMPLOYEE_ID.
+              Stable across pay periods within one spell.
+            tests: [not_null]
+          - name: LEGAL_FIRST_NAME
+            tests: [not_null]
+          - name: LEGAL_LAST_NAME
+            tests: [not_null]
+          - name: SIN_LAST_4
+            description: Sensitive — last 4 digits of SIN. Restrict access in marts.
+          - name: PAY_PERIOD_START
+            tests: [not_null]
+          - name: PAY_PERIOD_END
+            tests: [not_null]
+          - name: GROSS_AMOUNT_CAD
+          - name: HOURS_WORKED
+          - name: JOB_CODE
+          - name: COST_CENTER
+
+      # -----------------------------------------------------------------------
+      # CRM (Dabadu-shape) — sales-floor activity, preferred name
+      # -----------------------------------------------------------------------
+      - name: RAW_CRM_SALES_REPS
+        description: |
+          CRM user records. Only sales/support roles get CRM accounts. Uses
+          preferred name. One row per active employment spell.
+        columns:
+          - name: CRM_USER_ID
+            tests: [not_null, unique]
+          - name: PREFERRED_FIRST_NAME
+            tests: [not_null]
+          - name: LAST_NAME
+            tests: [not_null]
+          - name: DISPLAY_NAME
+          - name: CRM_EMAIL
+          - name: LOCATION_ID
+          - name: ROLE
+            tests:
+              - accepted_values:
+                  arguments:
+                    values: ['SALES_REP', 'SUPPORT_AGENT', 'MARKETING']
+          - name: ACTIVE
+          - name: CREATED_AT
+          - name: DEACTIVATED_AT
+
+      # -----------------------------------------------------------------------
+      # DMS (PBS-shape) — shortened first name typed-in-once
+      # -----------------------------------------------------------------------
+      - name: RAW_DMS_USERS
+        description: |
+          DMS (Dealer Management System) user records. Uses SHORTENED first name
+          ('Bob' for 'Robert'). Often has hire-date drift of ±1-3 days from HRIS.
+        columns:
+          - name: DMS_USER_ID
+            tests: [not_null, unique]
+          - name: SHORT_FIRST_NAME
+            description: Often a shortened/nickname version of legal first name.
+            tests: [not_null]
+          - name: LAST_NAME
+            tests: [not_null]
+          - name: DMS_USERNAME
+            description: Login username, derived from short_first + first 3 of last name.
+          - name: LOCATION_CODE
+          - name: DEPARTMENT_CODE
+          - name: HIRE_DATE_DMS
+            description: Local hire date in DMS. May drift ±1-3 days from HRIS.HIRE_DATE.
+          - name: TERMINATED_DATE_DMS
+
+      # -----------------------------------------------------------------------
+      # ERP — mirrors DMS but with broken FK link 10% of the time
+      # -----------------------------------------------------------------------
+      - name: RAW_ERP_USERS
+        description: |
+          ERP user records. Mostly mirrors DMS, but ~10% of LINKED_DMS_USER_IDs
+          are NULL — modeling real-world manual data drift where the DMS-ERP
+          link is broken.
+        columns:
+          - name: ERP_USER_ID
+            tests: [not_null, unique]
+          - name: LINKED_DMS_USER_ID
+            description: |
+              Foreign key to RAW_DMS_USERS.DMS_USER_ID. Nullable: ~10% of rows
+              have a broken link, simulating real-world drift.
+            tests:
+              - relationships:
+                  arguments:
+                    to: source('atlas_raw', 'RAW_DMS_USERS')
+                    field: DMS_USER_ID
+                  config:
+                    where: "LINKED_DMS_USER_ID IS NOT NULL"
+          - name: SHORT_FIRST_NAME
+          - name: LAST_NAME
+          - name: ERP_EMAIL
+          - name: ROLE_CODE
+          - name: PERMISSIONS_GROUP
+          - name: CREATED_AT
+          - name: LAST_LOGIN_AT

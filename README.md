@@ -24,12 +24,117 @@ Atlas is the open, reference implementation of that same pattern, rebuilt in mod
 
 ## What it does
 
-1. **Ingests** five realistic source systems with the kind of name and ID drift that real HR data exhibits — legal names, preferred names, shortened names, marriage name changes, contractor-to-FTE conversions, terminations and rehires, and inter-system ID schema mismatches.
+1. **Ingests** six realistic source systems with the kind of name and ID drift that real HR data exhibits — legal names, preferred names, shortened names, marriage name changes, contractor-to-FTE conversions, terminations and rehires, and inter-system ID schema mismatches.
 2. **Resolves identity** through a deterministic matching layer with explicit, auditable rules — not a black-box ML model. (An optional ML residual layer handles the long tail.)
 3. **Produces a canonical `dim_employee`** as a Type 2 slowly-changing dimension with full effective-dating, so point-in-time queries return correct answers.
 4. **Snapshots the workforce daily** into a date-spine fact table that supports any "what was true on date X" question — headcount, tenure, attrition cohort.
 5. **Exposes metrics through a privacy-aware semantic layer** — k-anonymity guards on small cohorts, field whitelisting, and audit logging.
 6. **Validates everything** through dbt tests, a chaos-corruption test suite, custom SCD2 contiguity tests, and a 7-job CI/CD pipeline.
+
+## Current build: Phase 2C identity matcher
+
+Phase 2C now builds the deterministic identity-resolution layer in `dbt_project/models/intermediate/`:
+
+- `int_identity_source_nodes` standardizes HRIS, ATS, payroll-spell, CRM, and DMS/ERP records onto a common matching grain.
+- `int_identity_pass_1_hard_anchors` resolves exact personal-email and work-email-local-part anchors.
+- `int_identity_pass_2_name_dob_hire` evaluates normalized first-name-root + last-name + hire-date candidates, but only auto-merges when DOB is present.
+- `int_identity_pass_3_email_domain` recovers company-domain + email last-name-token matches with hire-date proximity and a uniqueness gate.
+- `int_canonical_person` emits one stable `canonical_person_id` per HRIS-distinct person.
+- `int_stewardship_queue` captures every non-HRIS source identity that did not safely auto-merge.
+
+Latest verification:
+
+```bash
+cd dbt_project
+dbt build --select +int_canonical_person+ int_stewardship_queue
+```
+
+Result: 172/172 dbt resources passed, producing 5,000 canonical people and 6,985 stewardship queue records. Payroll is intentionally routed to stewardship in this phase because the current synthetic payroll feed has SIN_LAST_4 but no DOB/email bridge, and the generator makes SIN_LAST_4 unstable across pay periods. That is a deliberate false-negative-over-false-positive choice for HR data.
+
+## Current build: Phase 2D core marts
+
+Phase 2D now adds the first point-in-time marts in `dbt_project/models/marts/core/`:
+
+- `dim_employee` is an SCD2-style employee dimension at HRIS employment-spell grain, keyed by `canonical_person_id`.
+- `fct_workforce_daily` emits one employee-spell row per calendar date from hire through termination/as-of date.
+- Termination dates are retained as non-active event rows, so headcount uses `is_active_on_date = true` while attrition can count `is_termination_date = true`.
+- Full DOB and SIN_LAST_4 are not exposed in the core marts.
+
+Latest verification:
+
+```bash
+cd dbt_project
+dbt build --select +dim_employee+ fct_workforce_daily
+```
+
+Result: 195/195 dbt resources passed, producing 5,157 employee spell rows and 4,456,107 workforce daily rows from May 3, 2021 through May 5, 2026.
+
+## Current build: Phase 3 privacy layer
+
+Phase 3 now adds privacy-preserving people-analytics marts:
+
+- `workforce_headcount_daily` returns daily headcount by department, location, and employment type with below-k metrics suppressed.
+- `workforce_attrition_monthly` returns monthly attrition by the same HRBP dimensions, suppressing numerator, denominator, and rate when the month-start cohort is below k.
+- `privacy_suppression_summary` shows how many public mart rows were reportable vs suppressed.
+- `privacy_audit_log` is an incremental Snowflake table for future API/dashboard access events.
+- `privacy.sql` centralizes k-anonymity expressions and an `insert_privacy_audit_event` macro.
+
+Latest verification:
+
+```bash
+cd dbt_project
+dbt build --select +privacy_suppression_summary+ privacy_audit_log test_privacy_macros privacy__no_direct_employee_identifiers_in_people_analytics
+```
+
+Result: 235/235 dbt resources passed. With k=5, the public marts produced 610,740 daily headcount rows and 20,717 monthly attrition rows; suppressed rows stay visible for orientation but expose no exact small-cohort metrics.
+
+## Current build: Phase 4 operational layer
+
+Phase 4 now adds the runnable service surfaces around the privacy marts:
+
+- `airflow/dags/atlas_people_analytics.py` orchestrates dbt dependencies, staging, identity resolution, core marts, and privacy marts in order.
+- `api/metrics_service.py` exposes FastAPI endpoints for daily headcount, monthly attrition, privacy suppression summary, metadata, and health.
+- Every metric endpoint writes a best-effort row to `privacy_audit_log` with actor, purpose, filters, row counts, and suppressed-row counts.
+- `dashboard/app.py` provides a Streamlit HRBP dashboard over the API, using only privacy-safe mart fields.
+- The API composes SQL only against `ATLAS.<people_analytics_schema>` public marts and rejects unsafe configured identifiers.
+
+Local commands:
+
+```bash
+make api
+make dashboard
+make dag-test
+```
+
+## Current build: Phase 5A residual review assistant
+
+Phase 5A adds an explainable residual matcher in `identity_engine/` for source
+records that Phase 2C intentionally left in the stewardship queue:
+
+- `identity_engine/residual_matcher.py` scores candidate canonical people with
+  name, email-local-part, hire-date, and deterministic-hint features.
+- Recommendations are review-only: `high_confidence_review`,
+  `possible_review`, or `do_not_suggest`.
+- The engine never writes back to `int_canonical_person`; HR/data stewardship
+  remains the control point for anything below the deterministic threshold.
+- Sensitive fields such as SIN_LAST_4, full email, and DOB are not selected by
+  the Phase 5 export path.
+
+Example export:
+
+```bash
+python -m identity_engine.cli residual-candidates \
+  --limit 500 \
+  --top-n 3 \
+  --output identity_engine/output/residual_candidates.csv
+```
+
+Latest verification:
+
+```bash
+pytest tests/
+make dag-test
+```
 
 ## Architecture at a glance
 
@@ -121,20 +226,20 @@ make build
 # 6. Run all tests
 make test
 
-# 7. Launch the dashboard
+# 7. Launch the API and dashboard
+make api
 make dashboard
 ```
 
 ## Documentation
 
-- [The Problem in Detail](docs/01-the-problem.md)
-- [Architecture & Design Decisions](docs/02-architecture.md)
-- [Identity Resolution: How the Matching Works](docs/03-identity-resolution.md)
-- [SCD2 and Point-in-Time Correctness](docs/04-scd2-and-snapshots.md)
-- [Privacy by Design](docs/05-privacy-design.md)
-- [Walkthroughs](docs/walkthroughs/) — five real edge cases traced end-to-end
-- [Stretch: ML Residual Matching](docs/07-stretch-ml-residuals.md)
-- [AI Collaboration Log](docs/08-ai-collaboration.md) — honest log of where AI tools helped
+- [Demo Script](docs/00-demo-script.md)
+- [Identity Drift Recovery Walkthrough](docs/walkthroughs/identity-drift-example.md)
+- [Residual Matching Model Card](docs/07-ml-residuals.md)
+- [Residual Review Report](docs/walkthroughs/residual-review-report.md)
+- [Wealthsimple Interview Map](docs/interview/wealthsimple-role-map.md)
+- [Edward Demo Talk Track](docs/interview/edward-demo-talk-track.md)
+- [Productionization Plan And Metric Catalog](docs/interview/productionization-and-metric-catalog.md)
 
 ## License
 

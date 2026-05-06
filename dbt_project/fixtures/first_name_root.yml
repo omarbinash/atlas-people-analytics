@@ -1,0 +1,94 @@
+# =============================================================================
+# first_name_root macro spec — written BEFORE the macro implementation
+# =============================================================================
+# This file is the human-readable spec. The executable form lives at
+# `tests/macros/test_first_name_root.sql` and must mirror these cases exactly.
+#
+# `first_name_root(col)` does:
+#   1. normalize_name(col)           -> lowercase, accent-strip, strip non-alpha
+#   2. left-join nickname_map         -> nickname -> canonical_first_name
+#   3. coalesce(canonical, normalized) -> fall back to the literal normalized
+#                                          form when no nickname row exists
+#
+# The seed `nickname_map.csv` deliberately excludes ambiguous nicknames
+# (steve, alex, sam, chris, charlie, ed, andy, mo, pat, rick, frank). For those
+# inputs, the macro returns the normalized literal — which matches OTHER rows
+# with the same literal but cannot collapse e.g. Steven and Stephen. Those
+# cases route to stewardship via independent anchors. See `_seeds.yml` for the
+# full exclusion policy and rationale.
+# =============================================================================
+
+cases:
+
+  - id: 1
+    description: Already-canonical first name passes through
+    input: "Robert"
+    expected: "robert"
+
+  - id: 2
+    description: Common English nickname maps to canonical
+    input: "Bob"
+    expected: "robert"
+
+  - id: 3
+    description: Affectionate diminutive maps to canonical
+    input: "Bobby"
+    expected: "robert"
+
+  - id: 4
+    description: Truncation maps to canonical
+    input: "Rob"
+    expected: "robert"
+
+  - id: 5
+    description: Female nickname maps to canonical
+    input: "Liz"
+    expected: "elizabeth"
+
+  - id: 6
+    description: Female nickname maps to canonical (different form)
+    input: "Beth"
+    expected: "elizabeth"
+
+  - id: 7
+    description: Punjabi nickname maps to canonical
+    input: "Raj"
+    expected: "rajesh"
+
+  - id: 8
+    description: Hispanic nickname maps to canonical
+    input: "Paco"
+    expected: "francisco"
+
+  - id: 9
+    description: Unknown name passes through (not in nickname_map)
+    input: "Aiden"
+    expected: "aiden"
+
+  - id: 10
+    description: |
+      Ambiguous nickname passes through — 'Steve' is deliberately not mapped
+      because it could be Steven OR Stephen. Both legal forms will normalize
+      to themselves; matching across them requires an independent anchor.
+    input: "Steve"
+    expected: "steve"
+
+  - id: 11
+    description: Casing and whitespace handled before lookup
+    input: "  BoB  "
+    expected: "robert"
+
+  - id: 12
+    description: Already-canonical name with accent (Latin-Extended)
+    input: "Mária"
+    expected: "maria"
+
+  - id: 13
+    description: Empty string passes through as empty
+    input: ""
+    expected: ""
+
+  - id: 14
+    description: Null passes through as null
+    input: null
+    expected: null

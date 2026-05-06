@@ -71,6 +71,7 @@ dbt_project/.user.yml
 seeds/output/
 seeds/*.csv
 !seeds/sample.csv
+identity_engine/output/
 
 # Streamlit
 .streamlit/secrets.toml

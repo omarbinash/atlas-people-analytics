@@ -1,0 +1,53 @@
+version: 2
+
+seeds:
+
+  - name: nickname_map
+    description: |
+      Many-to-one mapping from common English / Punjabi / Hispanic nicknames
+      to their canonical (legal) first-name form. Used by the
+      `first_name_root` macro in the Phase 2C identity matcher to collapse
+      "Robert" / "Bob" / "Bobby" / "Rob" into a single name root before
+      cross-source name matching.
+
+      Inverted from `seeds/name_strategies.py:NICKNAME_MAP` (which is
+      one-to-many: canonical -> [nickname1, nickname2, ...]).
+
+      EXCLUSION POLICY — ambiguous nicknames are deliberately omitted:
+        - 'steve'       could be Steven or Stephen
+        - 'kate' / 'katie' could be Catherine or Katherine
+        - 'alex' / 'sasha' could be Alexander or Alexandra
+        - 'sam' / 'sammy'  could be Samuel or Samantha
+        - 'chris' / 'tina' / 'christy' could be Christopher / Christine / Christina
+        - 'charlie'     could be Charles or Charlotte
+        - 'ed' / 'eddie' could be Edward or Eduardo
+        - 'andy'        could be Andrew or Amandeep
+        - 'mo'          could be Mohammed or Muhammad
+        - 'pat'         could be Patrick or Patricia
+        - 'rick'        could be Richard or Frederick
+        - 'frank'       could be Francisco or its own legal name
+        - 'lars'        could be Lawrence or its own Scandinavian legal name
+
+      These cases will not match on first_name_root alone. They rely on
+      independent anchors (email, DOB, hire_date) to resolve. If no
+      independent anchor is available, the record routes to the
+      stewardship queue — which is the correct behavior because picking
+      the dominant interpretation could merge two distinct people.
+
+      To extend: only add a row if the nickname resolves unambiguously to
+      ONE canonical first name. If you find yourself wanting to map both
+      directions (steve -> steven AND steve -> stephen), exclude it instead.
+    config:
+      column_types:
+        nickname: VARCHAR(50)
+        canonical_first_name: VARCHAR(50)
+    columns:
+      - name: nickname
+        description: Lowercase nickname or short form (the form an analyst sees in DMS / CRM / ATS).
+        tests:
+          - not_null
+          - unique
+      - name: canonical_first_name
+        description: The legal / canonical first name this nickname unambiguously resolves to.
+        tests:
+          - not_null

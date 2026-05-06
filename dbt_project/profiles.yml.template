@@ -1,0 +1,38 @@
+# =============================================================================
+# Atlas dbt profiles.yml TEMPLATE
+# =============================================================================
+# This file is a template. To use:
+#
+#   1. Copy it to ~/.dbt/profiles.yml:    cp dbt_project/profiles.yml.template ~/.dbt/profiles.yml
+#   2. Edit ~/.dbt/profiles.yml and replace the env_var defaults with your account
+#   3. Confirm SNOWFLAKE_USER and SNOWFLAKE_PASSWORD are set in your shell
+#      (e.g. from .env via `set -a && source .env && set +a`)
+#   4. Run `dbt debug` to validate the connection
+#
+# IMPORTANT: never commit a profiles.yml with real credentials.
+# This template uses env_var() which is the safe approach.
+# =============================================================================
+
+atlas:
+  target: dev
+  outputs:
+    dev:
+      type: snowflake
+
+      # Account identifier (region included). For our project this is QLSJUMK-DC22948.us-east-1
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
+
+      # Authentication
+      user:     "{{ env_var('SNOWFLAKE_USER') }}"
+      password: "{{ env_var('SNOWFLAKE_PASSWORD') }}"
+
+      # Compute and storage
+      role:      "{{ env_var('SNOWFLAKE_ROLE',      'ATLAS_DEVELOPER') }}"
+      warehouse: "{{ env_var('SNOWFLAKE_WAREHOUSE', 'ATLAS_WH') }}"
+      database:  "{{ env_var('SNOWFLAKE_DATABASE',  'ATLAS') }}"
+      schema:    "{{ env_var('SNOWFLAKE_DBT_SCHEMA', 'DBT_DEV') }}"   # default dev schema
+
+      # Connection-level settings
+      threads: 4                # parallel model execution; tune up to 8 if account allows
+      client_session_keep_alive: false
+      query_tag: 'atlas-dbt'    # shows up in QUERY_HISTORY for debugging
