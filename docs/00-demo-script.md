@@ -3,6 +3,9 @@
 This is the short reviewer path through Atlas. It is written for interview and
 portfolio walkthroughs, not for a production deployment.
 
+For the Wealthsimple hiring-manager version of the walkthrough, use
+`docs/interview/edward-demo-talk-track.md` alongside this script.
+
 ## 1. The Problem
 
 People Analytics reporting is only as good as its employee identity spine.

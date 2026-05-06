@@ -237,6 +237,9 @@ make dashboard
 - [Identity Drift Recovery Walkthrough](docs/walkthroughs/identity-drift-example.md)
 - [Residual Matching Model Card](docs/07-ml-residuals.md)
 - [Residual Review Report](docs/walkthroughs/residual-review-report.md)
+- [Wealthsimple Interview Map](docs/interview/wealthsimple-role-map.md)
+- [Edward Demo Talk Track](docs/interview/edward-demo-talk-track.md)
+- [Productionization Plan And Metric Catalog](docs/interview/productionization-and-metric-catalog.md)
 
 ## License
 
