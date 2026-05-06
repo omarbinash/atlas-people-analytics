@@ -1,7 +1,9 @@
 # Residual Matching Model Card
 
 Atlas Phase 5A adds a residual matching assistant for records that remain in
-`int_stewardship_queue` after deterministic identity resolution.
+`int_stewardship_queue` after deterministic identity resolution. Phase 5B adds
+the richer walkthrough package around that assistant: review reporting,
+stewardship workflow notes, and optional proxy evaluation.
 
 ## Intended Use
 
@@ -57,8 +59,30 @@ Generate a markdown review report:
 python -m identity_engine.cli residual-report \
   --limit 500 \
   --top-n 3 \
+  --minimum-score 0.75 \
+  --top-candidates 12 \
   --output docs/walkthroughs/residual-review-report.md
 ```
+
+Generate optional proxy evaluation:
+
+```bash
+python -m identity_engine.cli residual-evaluate \
+  --limit 500 \
+  --top-n 3 \
+  --minimum-score 0.75 \
+  --output docs/walkthroughs/residual-model-evaluation.md
+```
+
+The proxy evaluation uses `int_stewardship_queue.suggested_canonical_person_id`
+only as a weak diagnostic hint. It is not ground truth and must not be used to
+approve canonical identity updates.
+
+## Phase 5B Walkthroughs
+
+- [Residual Review Walkthrough](walkthroughs/residual-review-walkthrough.md)
+- [Residual Review Report](walkthroughs/residual-review-report.md)
+- [Residual Proxy Evaluation](walkthroughs/residual-model-evaluation.md)
 
 ## Validation
 
@@ -68,4 +92,5 @@ The unit tests cover:
 - sparse/conflicting evidence suppression
 - ranking behavior
 - review-coverage report rendering
+- proxy-evaluation summary rendering
 - SQL guards against sensitive identity fields

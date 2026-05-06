@@ -3,7 +3,12 @@ from __future__ import annotations
 from datetime import date
 
 from api.settings import AtlasSettings
-from identity_engine.evaluation import render_residual_report, summarize_residual_candidates
+from identity_engine.evaluation import (
+    evaluate_against_deterministic_hints,
+    render_proxy_evaluation_report,
+    render_residual_report,
+    summarize_residual_candidates,
+)
 from identity_engine.residual_matcher import (
     CanonicalIdentity,
     ResidualCandidate,
@@ -153,6 +158,69 @@ def test_residual_report_summarizes_review_coverage() -> None:
     assert "## Recommendation Mix" in report
     assert "ATS::1" in report
     assert "CRM::2" not in report
+
+
+def test_proxy_evaluation_uses_stewardship_hints_without_claiming_ground_truth() -> None:
+    source_rows = [
+        SourceIdentity(
+            source_system="ATS",
+            source_record_key="ATS::1",
+            suggested_canonical_person_id="cp_1",
+        ),
+        SourceIdentity(
+            source_system="CRM",
+            source_record_key="CRM::2",
+            suggested_canonical_person_id="cp_2",
+        ),
+        SourceIdentity(
+            source_system="PAYROLL",
+            source_record_key="PAYROLL::3",
+        ),
+    ]
+    candidates = [
+        ResidualCandidate(
+            source_record_key="ATS::1",
+            source_system="ATS",
+            canonical_person_id="cp_1",
+            residual_score=0.96,
+            recommendation="high_confidence_review",
+            positive_anchor_count=4,
+            evidence_weight=1.0,
+        ),
+        ResidualCandidate(
+            source_record_key="CRM::2",
+            source_system="CRM",
+            canonical_person_id="cp_wrong",
+            residual_score=0.90,
+            recommendation="possible_review",
+            positive_anchor_count=3,
+            evidence_weight=0.8,
+        ),
+        ResidualCandidate(
+            source_record_key="CRM::2",
+            source_system="CRM",
+            canonical_person_id="cp_2",
+            residual_score=0.86,
+            recommendation="possible_review",
+            positive_anchor_count=3,
+            evidence_weight=0.8,
+        ),
+    ]
+
+    summary = evaluate_against_deterministic_hints(source_rows, candidates)
+    report = render_proxy_evaluation_report(summary, top_n=2, minimum_score=0.75)
+
+    assert summary.evaluated_source_count == 2
+    assert summary.source_records_with_candidates == 2
+    assert summary.top_1_alignment_count == 1
+    assert summary.top_k_alignment_count == 2
+    assert summary.top_1_alignment_rate == 0.5
+    assert summary.top_k_alignment_rate == 1.0
+    assert summary.mean_proxy_label_rank == 1.5
+    assert summary.candidate_counts_by_recommendation["possible_review"] == 2
+    assert summary.proxy_alignment_by_recommendation["possible_review"] == 0.5
+    assert "ground-truth model evaluation" in report
+    assert "does not approve matches" in report
 
 
 def _settings() -> AtlasSettings:

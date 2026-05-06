@@ -8,7 +8,12 @@ from pathlib import Path
 from typing import Any
 
 from api.settings import AtlasSettings
-from identity_engine.evaluation import render_residual_report, summarize_residual_candidates
+from identity_engine.evaluation import (
+    evaluate_against_deterministic_hints,
+    render_proxy_evaluation_report,
+    render_residual_report,
+    summarize_residual_candidates,
+)
 from identity_engine.residual_matcher import (
     ResidualCandidate,
     SourceIdentity,
@@ -41,6 +46,16 @@ def build_parser() -> argparse.ArgumentParser:
     report.add_argument("--output", type=Path)
     report.add_argument("--top-candidates", type=int, default=10)
     report.set_defaults(func=run_residual_report)
+
+    evaluate = subparsers.add_parser(
+        "residual-evaluate",
+        help="Render optional proxy evaluation against stewardship deterministic hints.",
+    )
+    evaluate.add_argument("--limit", type=int, default=500)
+    evaluate.add_argument("--top-n", type=int, default=3)
+    evaluate.add_argument("--minimum-score", type=float, default=0.75)
+    evaluate.add_argument("--output", type=Path)
+    evaluate.set_defaults(func=run_residual_evaluate)
     return parser
 
 
@@ -67,6 +82,25 @@ def run_residual_report(args: argparse.Namespace) -> int:
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(report, encoding="utf-8")
         print(f"Wrote residual review report to {args.output}")
+    else:
+        print(report)
+
+    return 0
+
+
+def run_residual_evaluate(args: argparse.Namespace) -> int:
+    source_rows, candidates = _rank_candidates(args)
+    summary = evaluate_against_deterministic_hints(source_rows, candidates)
+    report = render_proxy_evaluation_report(
+        summary,
+        top_n=args.top_n,
+        minimum_score=args.minimum_score,
+    )
+
+    if args.output:
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(report, encoding="utf-8")
+        print(f"Wrote residual proxy evaluation to {args.output}")
     else:
         print(report)
 

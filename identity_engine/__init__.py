@@ -2,6 +2,9 @@
 
 from identity_engine.evaluation import (
     ResidualEvaluationSummary,
+    ResidualProxyEvaluationSummary,
+    evaluate_against_deterministic_hints,
+    render_proxy_evaluation_report,
     render_residual_report,
     summarize_residual_candidates,
 )
@@ -17,8 +20,11 @@ __all__ = [
     "CanonicalIdentity",
     "ResidualCandidate",
     "ResidualEvaluationSummary",
+    "ResidualProxyEvaluationSummary",
     "SourceIdentity",
+    "evaluate_against_deterministic_hints",
     "rank_residual_candidates",
+    "render_proxy_evaluation_report",
     "render_residual_report",
     "score_residual_candidate",
     "summarize_residual_candidates",

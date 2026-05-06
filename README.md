@@ -125,19 +125,24 @@ make dashboard
 make dag-test
 ```
 
-## Current build: Phase 5A residual review assistant
+## Current build: Phase 5B residual review package
 
 Phase 5A adds an explainable residual matcher in `identity_engine/` for source
-records that Phase 2C intentionally left in the stewardship queue:
+records that Phase 2C intentionally left in the stewardship queue. Phase 5B
+wraps that matcher in a richer review package:
 
 - `identity_engine/residual_matcher.py` scores candidate canonical people with
   name, email-local-part, hire-date, and deterministic-hint features.
+- `identity_engine/evaluation.py` summarizes review coverage and optional proxy
+  evaluation against stewardship deterministic hints.
 - Recommendations are review-only: `high_confidence_review`,
   `possible_review`, or `do_not_suggest`.
 - The engine never writes back to `int_canonical_person`; HR/data stewardship
   remains the control point for anything below the deterministic threshold.
 - Sensitive fields such as SIN_LAST_4, full email, and DOB are not selected by
   the Phase 5 export path.
+- The optional proxy evaluation is a diagnostic artifact, not a production
+  accuracy claim.
 
 Example export:
 
@@ -146,6 +151,23 @@ python -m identity_engine.cli residual-candidates \
   --limit 500 \
   --top-n 3 \
   --output identity_engine/output/residual_candidates.csv
+```
+
+Example walkthrough reports:
+
+```bash
+python -m identity_engine.cli residual-report \
+  --limit 500 \
+  --top-n 3 \
+  --minimum-score 0.75 \
+  --top-candidates 12 \
+  --output docs/walkthroughs/residual-review-report.md
+
+python -m identity_engine.cli residual-evaluate \
+  --limit 500 \
+  --top-n 3 \
+  --minimum-score 0.75 \
+  --output docs/walkthroughs/residual-model-evaluation.md
 ```
 
 Latest verification:
@@ -263,7 +285,9 @@ make dashboard
 - [Demo Script](docs/00-demo-script.md)
 - [Identity Drift Recovery Walkthrough](docs/walkthroughs/identity-drift-example.md)
 - [Residual Matching Model Card](docs/07-ml-residuals.md)
+- [Residual Review Walkthrough](docs/walkthroughs/residual-review-walkthrough.md)
 - [Residual Review Report](docs/walkthroughs/residual-review-report.md)
+- [Residual Proxy Evaluation](docs/walkthroughs/residual-model-evaluation.md)
 - [Atlas One-Page Brief](docs/interview/one-page-brief.md)
 - [Wealthsimple Interview Map](docs/interview/wealthsimple-role-map.md)
 - [Edward Demo Talk Track](docs/interview/edward-demo-talk-track.md)
