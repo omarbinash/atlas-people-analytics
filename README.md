@@ -6,6 +6,25 @@
 
 ---
 
+## Start Here For Reviewers
+
+If you are reviewing Atlas quickly, start with these artifacts:
+
+- [Atlas One-Page Brief](docs/interview/one-page-brief.md) - the project in one read.
+- [Edward Demo Talk Track](docs/interview/edward-demo-talk-track.md) - the hiring-manager walkthrough.
+- [Two-Minute Demo Script](docs/interview/two-minute-demo-script.md) - the shortest spoken version.
+- [Dashboard Executive Overview](docs/assets/dashboard-executive-overview.png) - the HRBP-facing demo surface.
+- [People Analytics SQL Practice](docs/interview/sql-practice.md) - interview-style SQL prompts.
+- [SQL Answer Walkthroughs](docs/interview/sql-answer-walkthroughs.md) - how to explain the SQL aloud.
+- [Live Demo Checklist](docs/interview/live-demo-checklist.md) - pre-interview runbook.
+- [Reviewer Release Note](docs/interview/reviewer-release-note.md) - what changed and how to review it.
+
+The main point: Atlas is not primarily a dashboard. It is a governed employee
+identity and workforce metrics foundation, with dashboard/API surfaces as
+consumers of that foundation.
+
+---
+
 ## The problem
 
 Most People Analytics functions inherit a problem they cannot see.
@@ -248,10 +267,14 @@ make dashboard
 - [Atlas One-Page Brief](docs/interview/one-page-brief.md)
 - [Wealthsimple Interview Map](docs/interview/wealthsimple-role-map.md)
 - [Edward Demo Talk Track](docs/interview/edward-demo-talk-track.md)
+- [Two-Minute Demo Script](docs/interview/two-minute-demo-script.md)
 - [Productionization Plan And Metric Catalog](docs/interview/productionization-and-metric-catalog.md)
 - [Source Freshness And Reconciliation Plan](docs/interview/source-freshness-and-reconciliation.md)
 - [People Analytics SQL Practice](docs/interview/sql-practice.md)
+- [SQL Answer Walkthroughs](docs/interview/sql-answer-walkthroughs.md)
 - [Wealthsimple 30-60-90 Plan](docs/interview/wealthsimple-30-60-90.md)
+- [Live Demo Checklist](docs/interview/live-demo-checklist.md)
+- [Reviewer Release Note](docs/interview/reviewer-release-note.md)
 
 ## License
 
