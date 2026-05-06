@@ -86,7 +86,7 @@ def build_filters(metadata: dict[str, Any]) -> dict[str, Any]:
     min_snapshot = coerce_date(
         metadata.get("min_snapshot_date"), max_snapshot - timedelta(days=365)
     )
-    default_start = max(min_snapshot, max_snapshot - timedelta(days=180))
+    default_start = max(min_snapshot, max_snapshot - timedelta(days=7))
 
     st.sidebar.header("Filters")
     date_range = st.sidebar.date_input(
@@ -146,6 +146,82 @@ def suppression_rate(payload: dict[str, Any]) -> float:
     if row_count == 0:
         return 0.0
     return suppressed / row_count
+
+
+def reportable_row_count(df: pd.DataFrame, metric_column: str) -> int:
+    if df.empty or metric_column not in df:
+        return 0
+    return int(df[metric_column].notna().sum())
+
+
+def render_executive_overview(
+    metadata: dict[str, Any],
+    headcount_payload: dict[str, Any],
+    attrition_payload: dict[str, Any],
+    suppression: pd.DataFrame,
+    headcount: pd.DataFrame,
+    attrition: pd.DataFrame,
+) -> None:
+    st.subheader("Executive Overview")
+    st.caption("Governed people metrics from the canonical employee spine")
+
+    latest_headcount = current_headcount(headcount)
+    latest_attrition = latest_attrition_rate(attrition)
+    summary_cols = st.columns(4)
+    summary_cols[0].metric(
+        "Reportable headcount",
+        "Suppressed" if latest_headcount is None else f"{latest_headcount:,}",
+    )
+    summary_cols[1].metric(
+        "Latest attrition",
+        "Suppressed" if latest_attrition is None else f"{latest_attrition:.1%}",
+    )
+    summary_cols[2].metric(
+        "Suppressed rows",
+        f"{headcount_payload.get('suppressed_row_count', 0):,}",
+    )
+    summary_cols[3].metric(
+        "Data through",
+        str(metadata.get("max_snapshot_date", "Unknown")),
+    )
+
+    chart_cols = st.columns([2, 1])
+    with chart_cols[0]:
+        st.markdown("#### Headcount Trend")
+        if headcount.empty or reportable_row_count(headcount, "headcount") == 0:
+            st.info("No reportable headcount rows returned.")
+        else:
+            chart_data = (
+                headcount.dropna(subset=["headcount"])
+                .groupby("snapshot_date", as_index=False)["headcount"]
+                .sum()
+                .set_index("snapshot_date")
+            )
+            st.line_chart(chart_data)
+
+    with chart_cols[1]:
+        st.markdown("#### Privacy Status")
+        if suppression.empty:
+            st.info("No privacy summary rows returned.")
+        else:
+            privacy_chart = suppression.set_index("privacy_surface")[
+                ["reportable_row_count", "suppressed_row_count"]
+            ]
+            st.bar_chart(privacy_chart)
+
+    detail_cols = st.columns(3)
+    detail_cols[0].metric(
+        "Reportable headcount rows",
+        f"{reportable_row_count(headcount, 'headcount'):,}",
+    )
+    detail_cols[1].metric(
+        "Reportable attrition rows",
+        f"{reportable_row_count(attrition, 'attrition_rate'):,}",
+    )
+    detail_cols[2].metric(
+        "k threshold",
+        metadata.get("k_anonymity_threshold", 5),
+    )
 
 
 def render_overview(
@@ -221,9 +297,19 @@ def render_dashboard(metadata: dict[str, Any], filters: dict[str, Any]) -> None:
     metric_cols[2].metric("Suppressed rows", headcount_payload.get("suppressed_row_count", 0))
     metric_cols[3].metric("k threshold", metadata.get("k_anonymity_threshold", 5))
 
-    tab_overview, tab_headcount, tab_attrition, tab_privacy = st.tabs(
-        ["Overview", "Headcount", "Attrition", "Privacy"]
+    tab_executive, tab_overview, tab_headcount, tab_attrition, tab_privacy = st.tabs(
+        ["Executive Overview", "Lineage", "Headcount", "Attrition", "Privacy"]
     )
+
+    with tab_executive:
+        render_executive_overview(
+            metadata,
+            headcount_payload,
+            attrition_payload,
+            suppression,
+            headcount,
+            attrition,
+        )
 
     with tab_overview:
         render_overview(metadata, headcount_payload, attrition_payload, suppression)

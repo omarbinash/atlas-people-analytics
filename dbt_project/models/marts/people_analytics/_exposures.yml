@@ -1,0 +1,45 @@
+version: 2
+
+exposures:
+  - name: atlas_metrics_api
+    label: Atlas Metrics API
+    type: application
+    maturity: medium
+    url: http://127.0.0.1:8000/docs
+    description: |
+      FastAPI service that exposes privacy-safe People Analytics metrics from
+      governed marts and writes best-effort access events to the audit log.
+    depends_on:
+      - ref('workforce_headcount_daily')
+      - ref('workforce_attrition_monthly')
+      - ref('privacy_suppression_summary')
+      - ref('privacy_audit_log')
+    owner:
+      name: Atlas People Analytics Owner
+      email: atlas-people-analytics@example.com
+    config:
+      meta:
+        consumer: api
+        privacy_surface: true
+        purpose: controlled_metric_access
+
+  - name: atlas_hrbp_dashboard
+    label: Atlas HRBP Dashboard
+    type: dashboard
+    maturity: medium
+    url: http://localhost:8501
+    description: |
+      Streamlit demonstration dashboard for HRBP-style consumption of
+      privacy-safe headcount, attrition, and suppression observability metrics.
+    depends_on:
+      - ref('workforce_headcount_daily')
+      - ref('workforce_attrition_monthly')
+      - ref('privacy_suppression_summary')
+    owner:
+      name: Atlas People Analytics Owner
+      email: atlas-people-analytics@example.com
+    config:
+      meta:
+        consumer: dashboard
+        privacy_surface: true
+        purpose: hrbp_metric_demo

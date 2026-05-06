@@ -3,7 +3,7 @@ from __future__ import annotations
 import importlib.util
 from pathlib import Path
 
-from dashboard.app import records_frame, suppression_rate
+from dashboard.app import records_frame, reportable_row_count, suppression_rate
 
 
 def test_airflow_dag_module_imports_without_airflow_installed() -> None:
@@ -36,3 +36,18 @@ def test_dashboard_records_frame_uses_api_data_key() -> None:
 def test_dashboard_suppression_rate_handles_empty_payload() -> None:
     assert suppression_rate({"row_count": 0, "suppressed_row_count": 10}) == 0.0
     assert suppression_rate({"row_count": 10, "suppressed_row_count": 2}) == 0.2
+
+
+def test_dashboard_reportable_row_count_ignores_suppressed_metrics() -> None:
+    frame = records_frame(
+        {
+            "data": [
+                {"department": "Engineering", "headcount": 12},
+                {"department": "People", "headcount": None},
+                {"department": "Finance", "headcount": 8},
+            ]
+        }
+    )
+
+    assert reportable_row_count(frame, "headcount") == 2
+    assert reportable_row_count(frame, "attrition_rate") == 0

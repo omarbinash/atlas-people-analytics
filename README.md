@@ -199,6 +199,14 @@ atlas-people-analytics/
 └── pyproject.toml
 ```
 
+## Screenshots
+
+![Atlas architecture](docs/assets/atlas-architecture.png)
+
+![Dashboard executive overview](docs/assets/dashboard-executive-overview.png)
+
+![Residual review report](docs/assets/residual-review-report.png)
+
 ## Quick start
 
 > ⚠️ This project is configured against Snowflake. You will need a Snowflake account (the trial works).
@@ -237,9 +245,13 @@ make dashboard
 - [Identity Drift Recovery Walkthrough](docs/walkthroughs/identity-drift-example.md)
 - [Residual Matching Model Card](docs/07-ml-residuals.md)
 - [Residual Review Report](docs/walkthroughs/residual-review-report.md)
+- [Atlas One-Page Brief](docs/interview/one-page-brief.md)
 - [Wealthsimple Interview Map](docs/interview/wealthsimple-role-map.md)
 - [Edward Demo Talk Track](docs/interview/edward-demo-talk-track.md)
 - [Productionization Plan And Metric Catalog](docs/interview/productionization-and-metric-catalog.md)
+- [Source Freshness And Reconciliation Plan](docs/interview/source-freshness-and-reconciliation.md)
+- [People Analytics SQL Practice](docs/interview/sql-practice.md)
+- [Wealthsimple 30-60-90 Plan](docs/interview/wealthsimple-30-60-90.md)
 
 ## License
 
