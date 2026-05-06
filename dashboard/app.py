@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import os
 from datetime import date, timedelta
-from typing import Any
+from typing import Any, cast
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
@@ -31,7 +31,10 @@ def fetch_json(
         url = f"{url}?{query}"
     request = Request(url, headers={"X-Atlas-Actor": actor})
     with urlopen(request, timeout=30) as response:
-        return json.loads(response.read().decode("utf-8"))
+        payload = json.loads(response.read().decode("utf-8"))
+    if not isinstance(payload, dict):
+        return {}
+    return cast(dict[str, Any], payload)
 
 
 def records_frame(payload: dict[str, Any]) -> pd.DataFrame:
@@ -86,12 +89,18 @@ def build_filters(metadata: dict[str, Any]) -> dict[str, Any]:
     default_start = max(min_snapshot, max_snapshot - timedelta(days=180))
 
     st.sidebar.header("Filters")
-    start_date, end_date = st.sidebar.date_input(
+    date_range = st.sidebar.date_input(
         "Date range",
         value=(default_start, max_snapshot),
         min_value=min_snapshot,
         max_value=max_snapshot,
     )
+    if isinstance(date_range, tuple):
+        start_date = date_range[0] if len(date_range) >= 1 else default_start
+        end_date = date_range[1] if len(date_range) >= 2 else max_snapshot
+    else:
+        start_date = date_range
+        end_date = max_snapshot
     actor = st.sidebar.text_input("Actor", value="demo_hrbp", max_chars=80)
     department = option_filter("Department", metadata.get("departments", []))
     location = option_filter("Location", metadata.get("locations", []))

@@ -66,12 +66,12 @@ all: seed build test
 # Quality
 # -----------------------------------------------------------------------------
 lint:
-	ruff check .
-	mypy --config-file pyproject.toml seeds identity_engine api dashboard
+	ruff check api dashboard airflow identity_engine tests
+	mypy --config-file pyproject.toml identity_engine api dashboard
 
 format:
-	ruff check --fix .
-	ruff format .
+	ruff check --fix api dashboard airflow identity_engine tests
+	ruff format api dashboard airflow identity_engine tests
 
 # -----------------------------------------------------------------------------
 # Local serving

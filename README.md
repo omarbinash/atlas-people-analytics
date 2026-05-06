@@ -106,6 +106,29 @@ make dashboard
 make dag-test
 ```
 
+## Current build: Phase 5A residual review assistant
+
+Phase 5A adds an explainable residual matcher in `identity_engine/` for source
+records that Phase 2C intentionally left in the stewardship queue:
+
+- `identity_engine/residual_matcher.py` scores candidate canonical people with
+  name, email-local-part, hire-date, and deterministic-hint features.
+- Recommendations are review-only: `high_confidence_review`,
+  `possible_review`, or `do_not_suggest`.
+- The engine never writes back to `int_canonical_person`; HR/data stewardship
+  remains the control point for anything below the deterministic threshold.
+- Sensitive fields such as SIN_LAST_4, full email, and DOB are not selected by
+  the Phase 5 export path.
+
+Example export:
+
+```bash
+python -m identity_engine.cli residual-candidates \
+  --limit 500 \
+  --top-n 3 \
+  --output identity_engine/output/residual_candidates.csv
+```
+
 Latest verification:
 
 ```bash
@@ -212,6 +235,7 @@ make dashboard
 
 - [Demo Script](docs/00-demo-script.md)
 - [Identity Drift Recovery Walkthrough](docs/walkthroughs/identity-drift-example.md)
+- [Residual Matching Model Card](docs/07-ml-residuals.md)
 
 ## License
 

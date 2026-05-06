@@ -45,7 +45,8 @@ Airflow, Workday HRIS, Ashby ATS).
 - ✅ **Phase 2D** — dim_employee SCD2-style spell dimension + fct_workforce_daily snapshot, 195 passing dbt resources
 - ✅ **Phase 3** — Privacy layer (k-anonymity macro, privacy marts, audit logging), 235 passing dbt resources
 - ✅ **Phase 4** — Airflow DAG + FastAPI metric service + Streamlit HRBP dashboard
-- ⏳ **Phase 5** — ML residual matching + walkthrough docs, NEXT
+- ✅ **Phase 5A** — review-only residual matching assistant + walkthrough docs
+- ⏳ **Phase 5B** — richer walkthrough package + optional model evaluation, NEXT
 
 ## Phase 2C — implemented design
 
