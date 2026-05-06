@@ -51,6 +51,15 @@ python -m identity_engine.cli residual-candidates \
 The output directory is gitignored. Exports are review artifacts, not canonical
 truth.
 
+Generate a markdown review report:
+
+```bash
+python -m identity_engine.cli residual-report \
+  --limit 500 \
+  --top-n 3 \
+  --output docs/walkthroughs/residual-review-report.md
+```
+
 ## Validation
 
 The unit tests cover:
@@ -58,5 +67,5 @@ The unit tests cover:
 - high-confidence review candidate scoring
 - sparse/conflicting evidence suppression
 - ranking behavior
+- review-coverage report rendering
 - SQL guards against sensitive identity fields
-

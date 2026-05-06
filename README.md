@@ -236,6 +236,7 @@ make dashboard
 - [Demo Script](docs/00-demo-script.md)
 - [Identity Drift Recovery Walkthrough](docs/walkthroughs/identity-drift-example.md)
 - [Residual Matching Model Card](docs/07-ml-residuals.md)
+- [Residual Review Report](docs/walkthroughs/residual-review-report.md)
 
 ## License
 

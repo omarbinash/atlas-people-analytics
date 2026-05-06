@@ -61,6 +61,8 @@ Suggested live path:
 3. Show headcount and attrition changing with the filter.
 4. Open the Privacy tab and point to reportable vs suppressed rows.
 5. Hit `/privacy/suppression-summary` in the API docs.
+6. Open the residual review report and show that Phase 5 suggestions remain
+   outside the canonical write path.
 
 ## 6. What This Proves
 
@@ -74,4 +76,3 @@ warehouse environment:
 - privacy-preserving semantic marts
 - API/dashboard consumption with audit logging
 - orchestration shape through Airflow
-

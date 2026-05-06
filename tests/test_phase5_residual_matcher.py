@@ -3,8 +3,10 @@ from __future__ import annotations
 from datetime import date
 
 from api.settings import AtlasSettings
+from identity_engine.evaluation import render_residual_report, summarize_residual_candidates
 from identity_engine.residual_matcher import (
     CanonicalIdentity,
+    ResidualCandidate,
     SourceIdentity,
     rank_residual_candidates,
     score_residual_candidate,
@@ -101,6 +103,56 @@ def test_phase5_queries_do_not_select_sensitive_identifiers() -> None:
     assert "date_of_birth" not in sql
     assert "personal_email," not in sql
     assert "work_email," not in sql
+
+
+def test_residual_report_summarizes_review_coverage() -> None:
+    candidates = [
+        ResidualCandidate(
+            source_record_key="ATS::1",
+            source_system="ATS",
+            canonical_person_id="cp_1",
+            residual_score=0.96,
+            recommendation="high_confidence_review",
+            positive_anchor_count=4,
+            evidence_weight=1.0,
+            feature_scores={
+                "first_name_root": 1.0,
+                "last_name": 1.0,
+                "email_local": 0.9,
+                "hire_date": 1.0,
+                "deterministic_hint": 1.0,
+            },
+            reasons=("recommendation=high_confidence_review", "first_name_root_exact"),
+        ),
+        ResidualCandidate(
+            source_record_key="CRM::2",
+            source_system="CRM",
+            canonical_person_id="cp_2",
+            residual_score=0.78,
+            recommendation="possible_review",
+            positive_anchor_count=2,
+            evidence_weight=0.7,
+            feature_scores={
+                "first_name_root": 1.0,
+                "last_name": 0.8,
+                "email_local": None,
+                "hire_date": 0.9,
+                "deterministic_hint": None,
+            },
+            reasons=("recommendation=possible_review", "hire_date_within_30_days"),
+        ),
+    ]
+
+    summary = summarize_residual_candidates(candidates, source_record_count=5)
+    report = render_residual_report(summary, candidates, top_n=1)
+
+    assert summary.candidate_count == 2
+    assert summary.source_records_with_candidates == 2
+    assert summary.review_yield_rate == 0.4
+    assert summary.recommendation_counts["high_confidence_review"] == 1
+    assert "## Recommendation Mix" in report
+    assert "ATS::1" in report
+    assert "CRM::2" not in report
 
 
 def _settings() -> AtlasSettings:
