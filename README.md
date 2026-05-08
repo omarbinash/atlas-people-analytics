@@ -1,180 +1,57 @@
 # Atlas — Canonical Employee Record for People Analytics
 
-> A from-scratch implementation of the canonical-employee-record pattern: a deterministic identity-resolution layer that produces a stable employee key surviving job changes, rehires, and source-system migrations — with the SCD2 dimensions, dated workforce snapshots, and privacy-preserving semantic layer that ride on top of it.
+> Atlas is a synthetic People Analytics reference project that builds a governed employee identity spine across messy operational systems, then uses that spine to power point-in-time workforce metrics, privacy-safe marts, an API, and a dashboard.
 
 **Stack:** Python · dbt · Snowflake · Airflow · FastAPI · Streamlit · GitHub Actions
 
 ---
 
-## Start Here For Reviewers
+## Start Here
 
-If you are reviewing Atlas quickly, start with these artifacts:
+If you are reviewing Atlas quickly, these artifacts give the shortest path through the project:
 
-- [Dashboard Executive Overview](docs/assets/dashboard-executive-overview.png) - the HRBP-facing demo surface.
-- [Demo Script](docs/00-demo-script.md) - the shortest guided path through the project.
+- [Dashboard Executive Overview](docs/assets/dashboard-executive-overview.png) - the dashboard surface.
+- [Demo Script](docs/00-demo-script.md) - a concise guided walkthrough.
 - [Identity Drift Recovery Walkthrough](docs/walkthroughs/identity-drift-example.md) - the core identity-resolution example.
 - [Residual Review Walkthrough](docs/walkthroughs/residual-review-walkthrough.md) - the stewardship workflow for unresolved identities.
 - [Atlas A-to-Z Source Walkthrough](docs/atlas-a-to-z-source-walkthrough.md) - the full source-indexed implementation guide.
 
-The main point: Atlas is not primarily a dashboard. It is a governed employee
-identity and workforce metrics foundation, with dashboard/API surfaces as
-consumers of that foundation.
+The main point: Atlas is not primarily a dashboard. It is a governed employee identity and workforce metrics foundation, with API and dashboard surfaces sitting on top of that foundation.
 
 ---
 
-## The problem
+## The Problem
 
-Most People Analytics functions inherit a problem they cannot see.
+People Analytics reporting is only as trustworthy as the employee identity layer underneath it.
 
-Their HRIS knows one version of an employee. Payroll knows another. The applicant-tracking system that hired them four years ago has a third. The CRM where they appear as a salesperson has a fourth, often with a *preferred* name that differs from the legal name in payroll. The DMS where they actually log deals has a *shortened* name, because someone typed it in a hurry on day one. When the same person gets married, transferred between teams, terminated, or rehired, those records drift apart silently.
+In real operating environments, the same person often appears differently across systems. The HRIS may store a legal name, payroll may lag a name change, the ATS may retain a preferred name from the candidate stage, the CRM may use a sales-facing alias, and downstream tools may carry shortened or manually entered names. Rehires, terminations, contractor conversions, system migrations, and email-domain changes make the drift worse over time.
 
-Headcount reports become wrong. Attrition cohorts become wrong. Compensation analyses become wrong. And no one notices, because every individual system *looks correct in isolation*.
+Each source can look correct in isolation while cross-system reporting is wrong. Headcount can be double-counted. Attrition cohorts can be misclassified. Compensation and performance analysis can attach facts to the wrong employment spell.
 
-Atlas solves this. It produces a single canonical employee record — a stable key that survives source-system migrations, rehires, and the messy reality of how humans get represented in operational software.
+Atlas demonstrates how to solve that problem with a canonical employee record: a stable analytical identity that survives source-system drift and becomes the backbone for workforce reporting.
 
-## Why this exists
+## Design Principles
 
-I built the equivalent of this system once before, in production, at a 40-rooftop, $500M+ Canadian dealer group where I was the founding data hire. That implementation served HR, payroll, sales performance, and executive reporting for 800+ employees across multiple brands. It worked, but the code lived in a proprietary environment and could never be open-sourced.
+- **Deterministic before probabilistic:** identity rules are explicit, auditable, and tested.
+- **False negatives over false positives:** uncertain matches go to stewardship instead of being silently merged.
+- **Point-in-time correctness:** workforce facts are modeled by date, not only by the latest employee row.
+- **Privacy by design:** sensitive identifiers stay out of public marts and small cohorts are suppressed.
+- **Product-shaped data assets:** the system includes documentation, tests, serving contracts, audit logging, and a review workflow.
 
-Atlas is the open, reference implementation of that same pattern, rebuilt in modern infrastructure (dbt + Snowflake + Airflow) with the testing, documentation, and privacy engineering that production People Analytics deserves.
+## What Atlas Builds
 
-## What it does
+Atlas starts with six synthetic operational sources and turns them into a governed People Analytics serving layer:
 
-1. **Ingests** six realistic source systems with the kind of name and ID drift that real HR data exhibits — legal names, preferred names, shortened names, marriage name changes, contractor-to-FTE conversions, terminations and rehires, and inter-system ID schema mismatches.
-2. **Resolves identity** through a deterministic matching layer with explicit, auditable rules. An optional residual review layer helps stewards inspect the long tail without changing canonical records automatically.
-3. **Produces a canonical `dim_employee`** as a Type 2 slowly-changing dimension with full effective-dating, so point-in-time queries return correct answers.
-4. **Snapshots the workforce daily** into a date-spine fact table that supports any "what was true on date X" question — headcount, tenure, attrition cohort.
-5. **Exposes metrics through a privacy-aware semantic layer** — k-anonymity guards on small cohorts, field whitelisting, and audit logging.
-6. **Validates everything** through dbt tests, a chaos-corruption test suite, custom SCD2 contiguity tests, and a 7-job CI/CD pipeline.
+1. **Synthetic source systems** for HRIS, ATS, payroll, CRM, DMS, and ERP, including realistic identity drift.
+2. **Staging models** that preserve source-system meaning while normalizing names, types, dates, and email anchors.
+3. **A deterministic identity matcher** that emits one stable `canonical_person_id` per resolved person.
+4. **A stewardship queue** for records that should be reviewed rather than auto-merged.
+5. **Core workforce marts** with an SCD-style `dim_employee` and daily `fct_workforce_daily` date-spine fact table.
+6. **Privacy-safe People Analytics marts** for headcount, attrition, suppression summaries, and audit events.
+7. **Operational surfaces** through Airflow orchestration, FastAPI metric endpoints, and a Streamlit dashboard.
+8. **Residual review tooling** that ranks unresolved candidates for manual adjudication without writing canonical truth.
 
-## Current build: Phase 2C identity matcher
-
-Phase 2C now builds the deterministic identity-resolution layer in `dbt_project/models/intermediate/`:
-
-- `int_identity_source_nodes` standardizes HRIS, ATS, payroll-spell, CRM, and DMS/ERP records onto a common matching grain.
-- `int_identity_pass_1_hard_anchors` resolves exact personal-email and work-email-local-part anchors.
-- `int_identity_pass_2_name_dob_hire` evaluates normalized first-name-root + last-name + hire-date candidates, but only auto-merges when DOB is present.
-- `int_identity_pass_3_email_domain` recovers company-domain + email last-name-token matches with hire-date proximity and a uniqueness gate.
-- `int_canonical_person` emits one stable `canonical_person_id` per HRIS-distinct person.
-- `int_stewardship_queue` captures every non-HRIS source identity that did not safely auto-merge.
-
-Latest verification:
-
-```bash
-cd dbt_project
-dbt build --select +int_canonical_person+ int_stewardship_queue
-```
-
-Result: 172/172 dbt resources passed, producing 5,000 canonical people and 6,985 stewardship queue records. Payroll is intentionally routed to stewardship in this phase because the current synthetic payroll feed has SIN_LAST_4 but no DOB/email bridge, and the generator makes SIN_LAST_4 unstable across pay periods. That is a deliberate false-negative-over-false-positive choice for HR data.
-
-## Current build: Phase 2D core marts
-
-Phase 2D now adds the first point-in-time marts in `dbt_project/models/marts/core/`:
-
-- `dim_employee` is an SCD2-style employee dimension at HRIS employment-spell grain, keyed by `canonical_person_id`.
-- `fct_workforce_daily` emits one employee-spell row per calendar date from hire through termination/as-of date.
-- Termination dates are retained as non-active event rows, so headcount uses `is_active_on_date = true` while attrition can count `is_termination_date = true`.
-- Full DOB and SIN_LAST_4 are not exposed in the core marts.
-
-Latest verification:
-
-```bash
-cd dbt_project
-dbt build --select +dim_employee+ fct_workforce_daily
-```
-
-Result: 195/195 dbt resources passed, producing 5,157 employee spell rows and 4,456,107 workforce daily rows from May 3, 2021 through May 5, 2026.
-
-## Current build: Phase 3 privacy layer
-
-Phase 3 now adds privacy-preserving people-analytics marts:
-
-- `workforce_headcount_daily` returns daily headcount by department, location, and employment type with below-k metrics suppressed.
-- `workforce_attrition_monthly` returns monthly attrition by the same HRBP dimensions, suppressing numerator, denominator, and rate when the month-start cohort is below k.
-- `privacy_suppression_summary` shows how many public mart rows were reportable vs suppressed.
-- `privacy_audit_log` is an incremental Snowflake table for future API/dashboard access events.
-- `privacy.sql` centralizes k-anonymity expressions and an `insert_privacy_audit_event` macro.
-
-Latest verification:
-
-```bash
-cd dbt_project
-dbt build --select +privacy_suppression_summary+ privacy_audit_log test_privacy_macros privacy__no_direct_employee_identifiers_in_people_analytics
-```
-
-Result: 235/235 dbt resources passed. With k=5, the public marts produced 610,740 daily headcount rows and 20,717 monthly attrition rows; suppressed rows stay visible for orientation but expose no exact small-cohort metrics.
-
-## Current build: Phase 4 operational layer
-
-Phase 4 now adds the runnable service surfaces around the privacy marts:
-
-- `airflow/dags/atlas_people_analytics.py` orchestrates dbt dependencies, staging, identity resolution, core marts, and privacy marts in order.
-- `api/metrics_service.py` exposes FastAPI endpoints for daily headcount, monthly attrition, privacy suppression summary, metadata, and health.
-- Every metric endpoint writes a best-effort row to `privacy_audit_log` with actor, purpose, filters, row counts, and suppressed-row counts.
-- `dashboard/app.py` provides a Streamlit HRBP dashboard over the API, using only privacy-safe mart fields.
-- The API composes SQL only against `ATLAS.<people_analytics_schema>` public marts and rejects unsafe configured identifiers.
-
-Local commands:
-
-```bash
-make api
-make dashboard
-make dag-test
-```
-
-## Current build: Phase 5B residual review package
-
-Phase 5A adds an explainable residual matcher in `identity_engine/` for source
-records that Phase 2C intentionally left in the stewardship queue. Phase 5B
-wraps that matcher in a richer review package:
-
-- `identity_engine/residual_matcher.py` scores candidate canonical people with
-  name, email-local-part, hire-date, and deterministic-hint features.
-- `identity_engine/evaluation.py` summarizes review coverage and optional proxy
-  ranking diagnostics against stewardship deterministic hints.
-- Recommendations are review-only: `high_confidence_review`,
-  `possible_review`, or `do_not_suggest`.
-- The engine never writes back to `int_canonical_person`; HR/data stewardship
-  remains the control point for anything below the deterministic threshold.
-- Sensitive fields such as SIN_LAST_4, full email, and DOB are not selected by
-  the residual export path.
-- The optional proxy ranking diagnostic is a review artifact, not a production
-  accuracy claim.
-
-Example export:
-
-```bash
-python -m identity_engine.cli residual-candidates \
-  --limit 500 \
-  --top-n 3 \
-  --output identity_engine/output/residual_candidates.csv
-```
-
-Example walkthrough reports:
-
-```bash
-python -m identity_engine.cli residual-report \
-  --limit 500 \
-  --top-n 3 \
-  --minimum-score 0.75 \
-  --top-candidates 12 \
-  --output docs/walkthroughs/residual-review-report.md
-
-python -m identity_engine.cli residual-evaluate \
-  --limit 500 \
-  --top-n 3 \
-  --minimum-score 0.75 \
-  --output docs/walkthroughs/residual-ranking-evaluation.md
-```
-
-Latest verification:
-
-```bash
-pytest tests/
-make dag-test
-```
-
-## Architecture at a glance
+## Architecture
 
 ```
         ┌─────────────────── Source Systems ──────────────────┐
@@ -189,52 +66,119 @@ make dag-test
                        └──────┬───────┘
                               ▼
                        ┌──────────────┐
-                       │  staging     │  1:1 source mirrors, normalized types
+                       │  staging     │  source mirrors, typed and normalized
                        └──────┬───────┘
                               ▼
                        ┌──────────────┐
-                       │ intermediate │  Identity resolution lives here
-                       │              │  - normalized name candidates
-                       │              │  - deterministic match clusters
-                       │              │  - stable employee_key emission
+                       │ intermediate │  identity nodes, deterministic passes,
+                       │              │  canonical people, stewardship queue
                        └──────┬───────┘
                               ▼
                        ┌──────────────┐
-                       │     core     │  dim_employee (SCD2)
-                       │     marts    │  fct_workforce_daily (snapshot)
+                       │ core marts   │  dim_employee, fct_workforce_daily
                        └──────┬───────┘
                               ▼
                        ┌──────────────┐
-                       │  people_     │  attrition_cohort, tenure,
-                       │  analytics   │  headcount_pit, comp_bands
-                       │     marts    │
+                       │ people       │  headcount, attrition, suppression,
+                       │ analytics    │  privacy audit events
                        └──────┬───────┘
                               ▼
                 ┌─────────────┴──────────────┐
                 ▼                            ▼
         ┌──────────────┐            ┌──────────────┐
         │  FastAPI     │            │  Streamlit   │
-        │  metrics svc │            │  HRBP demo   │
-        │  (k-anon)    │            │  dashboard   │
+        │  metrics svc │            │  dashboard   │
+        │  (k-anon)    │            │              │
         └──────────────┘            └──────────────┘
 ```
 
-## Repository structure
+## Identity Resolution
+
+The identity layer lives in `dbt_project/models/intermediate/` and uses a conservative three-pass matcher:
+
+- `int_identity_source_nodes` standardizes HRIS, ATS, payroll, CRM, DMS, and ERP records onto a common matching grain.
+- `int_identity_pass_1_hard_anchors` resolves the safest exact anchors, such as personal-email and work-email-local-part matches.
+- `int_identity_pass_2_name_dob_hire` evaluates normalized first-name-root, last-name, DOB, and hire-date proximity.
+- `int_identity_pass_3_email_domain` recovers harder company-domain and last-name-token matches with uniqueness controls.
+- `int_canonical_person` emits the canonical identity spine.
+- `int_stewardship_queue` captures unresolved source identities with the best available evidence for human review.
+
+Payroll records are intentionally routed to stewardship where the synthetic feed lacks a stable DOB/email bridge and where generated SIN_LAST_4 values are not stable across pay periods. That is a deliberate governance choice: in people data, an incorrect merge is more damaging than an unresolved record.
+
+## Workforce Modeling
+
+The core marts turn identity into point-in-time workforce facts:
+
+- `dim_employee` models HRIS employment spells as SCD-style rows keyed by `canonical_person_id`.
+- `fct_workforce_daily` emits one row per employee spell per calendar date from hire through termination or the configured as-of date.
+- Headcount uses `is_active_on_date = true`.
+- Attrition can count `is_termination_date = true` without losing the employee's historical state.
+- Full DOB and SIN_LAST_4 do not propagate into core or public-facing marts.
+
+This structure supports questions like "Who was active on March 31?" or "What was attrition for this department last month?" without relying on the latest employee row to describe the past.
+
+## Privacy And Serving
+
+The public People Analytics layer is designed for governed consumption:
+
+- `workforce_headcount_daily` returns daily headcount by department, location, and employment type.
+- `workforce_attrition_monthly` returns monthly attrition using the same business-facing dimensions.
+- Small cohorts are protected through k-anonymity suppression.
+- Suppressed rows remain visible for orientation, but exact small-cohort metrics are nulled.
+- `privacy_suppression_summary` reports how many rows are reportable vs suppressed.
+- `privacy_audit_log` stores metric access events from the API.
+
+The FastAPI service reads only from privacy-safe marts, rejects unsafe configured identifiers, and records actor, purpose, filters, row counts, and suppression counts for metric requests. The Streamlit dashboard consumes the API rather than querying sensitive warehouse layers directly.
+
+## Residual Review
+
+Atlas also includes a review-only residual workflow in `identity_engine/` for records left in the stewardship queue.
+
+The residual engine scores candidate canonical people using explainable features such as first-name-root, last-name similarity, email-local-part similarity, hire-date proximity, and deterministic hints. Recommendations are intentionally non-authoritative:
+
+- `high_confidence_review`
+- `possible_review`
+- `do_not_suggest`
+
+The workflow is designed to reduce review effort, not to update `int_canonical_person`. Any match still requires a governed stewardship decision before it can influence canonical records or downstream marts.
+
+## Verification
+
+Atlas is tested across dbt, Python, and operational boundaries.
+
+Key validation results from the current repository state:
+
+- Identity matcher build: `172/172` dbt resources passed, producing `5,000` canonical people and `6,985` stewardship queue records.
+- Core workforce build: `195/195` dbt resources passed, producing `5,157` employee spell rows and `4,456,107` daily workforce rows.
+- Privacy mart build: `235/235` dbt resources passed, with below-k public metrics suppressed.
+- Python test suite: `15` tests passing across API, DAG import, dashboard helpers, and residual review logic.
+- Static checks: `ruff`, `mypy`, `dbt parse`, and `git diff --check` have been run during development.
+
+Useful commands:
+
+```bash
+make build
+make test
+make lint
+make dag-test
+```
+
+## Repository Structure
 
 ```
 atlas-people-analytics/
-├── docs/                     # The story, the architecture, the walkthroughs
-├── seeds/                    # Synthetic data generator (Faker + IBM HR Analytics seed)
-├── dbt_project/              # Models, tests, macros, snapshots
-├── airflow/                  # Production-shaped DAG
+├── docs/                     # Architecture notes, walkthroughs, screenshots
+├── seeds/                    # Synthetic data generator
+├── dbt_project/              # dbt models, tests, macros, fixtures, seeds
+├── airflow/                  # Airflow DAG
 ├── identity_engine/          # Residual identity review tooling
 ├── api/                      # FastAPI privacy-aware metrics service
-├── dashboard/                # Streamlit HRBP-facing demo
-├── tests/                    # Python tests + chaos corruption suite
+├── dashboard/                # Streamlit dashboard
+├── tests/                    # Python tests
 ├── infra/                    # Snowflake provisioning SQL
 ├── .github/workflows/        # CI/CD
-├── Makefile                  # `make seed && make build && make test`
-└── pyproject.toml
+├── Makefile                  # Local developer commands
+└── pyproject.toml            # Python package and tooling config
 ```
 
 ## Screenshots
@@ -245,9 +189,9 @@ atlas-people-analytics/
 
 ![Residual review report](docs/assets/residual-review-report.png)
 
-## Quick start
+## Quick Start
 
-> ⚠️ This project is configured against Snowflake. You will need a Snowflake account (the trial works).
+> This project is configured for Snowflake. You will need a Snowflake account; a trial account is sufficient.
 
 ```bash
 # 1. Clone and install
@@ -258,24 +202,27 @@ pip install -e ".[dev]"
 
 # 2. Configure Snowflake credentials
 cp .env.example .env
-# Edit .env with your account / user / role / warehouse / database
+# Edit .env with your account, user, role, warehouse, and database.
 
-# 3. Provision Snowflake objects (one-time)
+# 3. Provision Snowflake objects
 make snowflake-init
 
-# 4. Generate synthetic data and load to raw schema
+# 4. Generate synthetic data and load the raw schema
 make seed
 
-# 5. Build the dbt models
+# 5. Build models and run tests
 make build
-
-# 6. Run all tests
 make test
 
-# 7. Launch the API and dashboard
+# 6. Launch the API and dashboard
 make api
 make dashboard
 ```
+
+Local service URLs:
+
+- API docs: `http://127.0.0.1:8000/docs`
+- Dashboard: `http://localhost:8501`
 
 ## Documentation
 
@@ -285,11 +232,12 @@ make dashboard
 - [Residual Review Walkthrough](docs/walkthroughs/residual-review-walkthrough.md)
 - [Residual Review Report](docs/walkthroughs/residual-review-report.md)
 - [Residual Ranking Diagnostics](docs/walkthroughs/residual-ranking-evaluation.md)
+- [Atlas A-to-Z Source Walkthrough](docs/atlas-a-to-z-source-walkthrough.md)
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT - see [LICENSE](LICENSE).
 
 ---
 
-*Atlas is a portfolio project, not a production system you should deploy as-is. The patterns are production-grade; the synthetic data is not. Use it as a reference implementation, a study aid, or a foundation for your own People Analytics work.*
+Atlas is a portfolio reference implementation, not a production system to deploy as-is. The data is synthetic, and the patterns are intended to demonstrate how a governed People Analytics foundation can be designed, tested, and served.
