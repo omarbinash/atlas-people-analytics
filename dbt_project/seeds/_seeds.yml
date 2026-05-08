@@ -20,7 +20,7 @@ seeds:
         - 'sam' / 'sammy'  could be Samuel or Samantha
         - 'chris' / 'tina' / 'christy' could be Christopher / Christine / Christina
         - 'charlie'     could be Charles or Charlotte
-        - 'ed' / 'eddie' could be Edward or Eduardo
+        - short-form "ed" variants are ambiguous across multiple legal names
         - 'andy'        could be Andrew or Amandeep
         - 'mo'          could be Mohammed or Muhammad
         - 'pat'         could be Patrick or Patricia

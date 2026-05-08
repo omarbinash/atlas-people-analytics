@@ -4,8 +4,8 @@ Phase 5B turns the Phase 5A residual matcher into a richer stewardship package:
 candidate exports, a review report, optional proxy evaluation, and a clear
 operating path for manual adjudication.
 
-This is still synthetic data only. The residual engine is not a production ML
-identity resolver and it does not update canonical employee records.
+This is still synthetic data only. The residual engine is review-only and does
+not update canonical employee records.
 
 ## Why Phase 5B Exists
 
@@ -84,7 +84,7 @@ python -m identity_engine.cli residual-evaluate \
   --limit 500 \
   --top-n 3 \
   --minimum-score 0.75 \
-  --output docs/walkthroughs/residual-model-evaluation.md
+  --output docs/walkthroughs/residual-ranking-evaluation.md
 ```
 
 ## Stewardship Workflow
@@ -96,7 +96,7 @@ python -m identity_engine.cli residual-evaluate \
 5. Apply approved canonical updates through a governed write path.
 6. Rebuild downstream marts only after approved identity changes land.
 
-## How To Explain This In Interview
+## How To Present This
 
 The strongest explanation:
 
@@ -123,7 +123,7 @@ It is not useful for claiming production accuracy or approving matches.
 
 - No full email addresses are exported.
 - No SIN_LAST_4 is exported.
-- Full DOB is not selected by the Phase 5 export path.
+- Full DOB is not selected by the residual export path.
 - Candidate recommendations never write `int_canonical_person`.
 - Proxy evaluation never becomes an identity decision.
 - The system prefers false negatives over false positives.

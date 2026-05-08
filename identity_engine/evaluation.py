@@ -327,7 +327,7 @@ def render_proxy_evaluation_report(
         "the stewardship queue's `suggested_canonical_person_id` when that hint",
         "exists.",
         "",
-        "This is **not** ground-truth model evaluation. The hint is the best",
+        "This is **not** ground-truth accuracy evaluation. The hint is the best",
         "deterministic candidate that failed auto-merge controls, so it is useful",
         "for walkthrough diagnostics but must not be treated as an approved match.",
         "",

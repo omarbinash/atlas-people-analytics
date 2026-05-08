@@ -51,7 +51,6 @@ NICKNAME_MAP: dict[str, list[str]] = {
     "Andrew": ["Andy", "Drew"],
     "Steven": ["Steve"],
     "Stephen": ["Steve", "Steph"],
-    "Edward": ["Ed", "Eddie", "Ted"],
     "Thomas": ["Tom", "Tommy"],
     "Charles": ["Charlie", "Chuck", "Chaz"],
     "Joseph": ["Joe", "Joey"],

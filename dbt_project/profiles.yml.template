@@ -19,7 +19,7 @@ atlas:
     dev:
       type: snowflake
 
-      # Account identifier (region included). For our project this is QLSJUMK-DC22948.us-east-1
+      # Account identifier, including region when required by Snowflake.
       account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
 
       # Authentication

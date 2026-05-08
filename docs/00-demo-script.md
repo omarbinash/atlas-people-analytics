@@ -1,10 +1,7 @@
 # Atlas Demo Script
 
-This is the short reviewer path through Atlas. It is written for interview and
+This is the short reviewer path through Atlas. It is written for technical and
 portfolio walkthroughs, not for a production deployment.
-
-For the Wealthsimple hiring-manager version of the walkthrough, use
-`docs/interview/edward-demo-talk-track.md` alongside this script.
 
 ## 1. The Problem
 

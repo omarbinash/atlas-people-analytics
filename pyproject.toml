@@ -24,7 +24,7 @@ dependencies = [
     "faker>=22.5.0",
     "pyyaml>=6.0.1",
 
-    # Identity resolution (deterministic + ML residual)
+    # Identity resolution (deterministic + residual review)
     "rapidfuzz>=3.6.0",
     "unidecode>=1.3.8",
 

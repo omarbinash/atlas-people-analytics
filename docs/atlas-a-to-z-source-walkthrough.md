@@ -22,7 +22,7 @@ Atlas starts with a deliberately simple but realistic premise: People Analytics 
 12. **Serving layer**: FastAPI exposes privacy-safe endpoints, writes audit events, and refuses unsafe schema/table identifiers. Streamlit consumes the API for an HRBP-facing dashboard.
 13. **Orchestration**: the Airflow DAG documents production-shaped dependency order.
 14. **Residual review**: Phase 5 ranks unresolved candidates for steward review without writing canonical identity.
-15. **Tests and docs**: SQL tests, Python tests, model docs, walkthroughs, and interview material make the system reviewable and defensible.
+15. **Tests and docs**: SQL tests, Python tests, model docs, and walkthroughs make the system reviewable and defensible.
 
 The central design choice is conservative identity resolution: false positives in people data are worse than false negatives. Atlas would rather queue a record for stewardship than silently merge two humans and contaminate headcount, attrition, compensation, or performance history.
 
@@ -298,7 +298,7 @@ dependencies = [
     "faker>=22.5.0",
     "pyyaml>=6.0.1",
 
-    # Identity resolution (deterministic + ML residual)
+    # Identity resolution (deterministic + residual review)
     "rapidfuzz>=3.6.0",
     "unidecode>=1.3.8",
 
@@ -665,7 +665,6 @@ NICKNAME_MAP: dict[str, list[str]] = {
     "Andrew": ["Andy", "Drew"],
     "Steven": ["Steve"],
     "Stephen": ["Steve", "Steph"],
-    "Edward": ["Ed", "Eddie", "Ted"],
     "Thomas": ["Tom", "Tommy"],
     "Charles": ["Charlie", "Chuck", "Chaz"],
     "Joseph": ["Joe", "Joey"],
@@ -2023,7 +2022,7 @@ atlas:
     dev:
       type: snowflake
 
-      # Account identifier (region included). For our project this is QLSJUMK-DC22948.us-east-1
+      # Account identifier, including region when required by Snowflake.
       account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
 
       # Authentication
@@ -2071,7 +2070,7 @@ seeds:
         - 'sam' / 'sammy'  could be Samuel or Samantha
         - 'chris' / 'tina' / 'christy' could be Christopher / Christine / Christina
         - 'charlie'     could be Charles or Charlotte
-        - 'ed' / 'eddie' could be Edward or Eduardo
+        - short-form "ed" variants are ambiguous across multiple legal names
         - 'andy'        could be Andrew or Amandeep
         - 'mo'          could be Mohammed or Muhammad
         - 'pat'         could be Patrick or Patricia
@@ -2441,12 +2440,12 @@ cases:
 
   Non-Latin scripts (zh_CN, ar_AA): returns empty string after non-alpha
   strip. The matcher relies on email-domain anchors (Pass 3) for cross-script
-  identity resolution — see CLAUDE.md and the anchor table memory.
+  identity resolution.
 
   Tradeoff: pure SQL keeps the warehouse self-contained and the function
   inlinable for query optimization. Python UDF using `unidecode` would
   give full Unicode transliteration but adds Snowpark infrastructure and
-  costs more per row. Revisit if Phase 5 ML matching needs CJK name roots.
+  costs more per row. Revisit if future residual matching needs CJK name roots.
 -#}
 
 {% macro normalize_name(col) -%}
@@ -4343,9 +4342,8 @@ select * from with_flags_and_key
 -- ---------------------------------------------------------------------------
 -- The synthesizer regenerates SIN_LAST_4 for every monthly pay period
 -- (synthesize.py:497, `random.randint(1000, 9999)`). It is NOT stable
--- within a spell, NOT stable within a person. Was originally proposed in
--- CLAUDE.md as an anchor; dropped from the anchor table after verification.
--- See synthesizer_quirks memory.
+-- within a spell, NOT stable within a person, so it is excluded from the
+-- deterministic anchor table.
 --
 -- ---------------------------------------------------------------------------
 -- Earliest vs latest naming
@@ -9038,7 +9036,7 @@ def render_proxy_evaluation_report(
         "the stewardship queue's `suggested_canonical_person_id` when that hint",
         "exists.",
         "",
-        "This is **not** ground-truth model evaluation. The hint is the best",
+        "This is **not** ground-truth accuracy evaluation. The hint is the best",
         "deterministic candidate that failed auto-merge controls, so it is useful",
         "for walkthrough diagnostics but must not be treated as an approved match.",
         "",
@@ -9838,7 +9836,7 @@ def test_proxy_evaluation_uses_stewardship_hints_without_claiming_ground_truth()
     assert summary.mean_proxy_label_rank == 1.5
     assert summary.candidate_counts_by_recommendation["possible_review"] == 2
     assert summary.proxy_alignment_by_recommendation["possible_review"] == 0.5
-    assert "ground-truth model evaluation" in report
+    assert "ground-truth accuracy evaluation" in report
     assert "does not approve matches" in report
 
 

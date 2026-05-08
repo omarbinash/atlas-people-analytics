@@ -42,9 +42,8 @@
 -- ---------------------------------------------------------------------------
 -- The synthesizer regenerates SIN_LAST_4 for every monthly pay period
 -- (synthesize.py:497, `random.randint(1000, 9999)`). It is NOT stable
--- within a spell, NOT stable within a person. Was originally proposed in
--- CLAUDE.md as an anchor; dropped from the anchor table after verification.
--- See synthesizer_quirks memory.
+-- within a spell, NOT stable within a person, so it is excluded from the
+-- deterministic anchor table.
 --
 -- ---------------------------------------------------------------------------
 -- Earliest vs latest naming

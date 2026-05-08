@@ -219,7 +219,7 @@ def test_proxy_evaluation_uses_stewardship_hints_without_claiming_ground_truth()
     assert summary.mean_proxy_label_rank == 1.5
     assert summary.candidate_counts_by_recommendation["possible_review"] == 2
     assert summary.proxy_alignment_by_recommendation["possible_review"] == 0.5
-    assert "ground-truth model evaluation" in report
+    assert "ground-truth accuracy evaluation" in report
     assert "does not approve matches" in report
 
 

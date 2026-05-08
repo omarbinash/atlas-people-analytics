@@ -10,14 +10,11 @@
 
 If you are reviewing Atlas quickly, start with these artifacts:
 
-- [Atlas One-Page Brief](docs/interview/one-page-brief.md) - the project in one read.
-- [Edward Demo Talk Track](docs/interview/edward-demo-talk-track.md) - the hiring-manager walkthrough.
-- [Two-Minute Demo Script](docs/interview/two-minute-demo-script.md) - the shortest spoken version.
 - [Dashboard Executive Overview](docs/assets/dashboard-executive-overview.png) - the HRBP-facing demo surface.
-- [People Analytics SQL Practice](docs/interview/sql-practice.md) - interview-style SQL prompts.
-- [SQL Answer Walkthroughs](docs/interview/sql-answer-walkthroughs.md) - how to explain the SQL aloud.
-- [Live Demo Checklist](docs/interview/live-demo-checklist.md) - pre-interview runbook.
-- [Reviewer Release Note](docs/interview/reviewer-release-note.md) - what changed and how to review it.
+- [Demo Script](docs/00-demo-script.md) - the shortest guided path through the project.
+- [Identity Drift Recovery Walkthrough](docs/walkthroughs/identity-drift-example.md) - the core identity-resolution example.
+- [Residual Review Walkthrough](docs/walkthroughs/residual-review-walkthrough.md) - the stewardship workflow for unresolved identities.
+- [Atlas A-to-Z Source Walkthrough](docs/atlas-a-to-z-source-walkthrough.md) - the full source-indexed implementation guide.
 
 The main point: Atlas is not primarily a dashboard. It is a governed employee
 identity and workforce metrics foundation, with dashboard/API surfaces as
@@ -44,7 +41,7 @@ Atlas is the open, reference implementation of that same pattern, rebuilt in mod
 ## What it does
 
 1. **Ingests** six realistic source systems with the kind of name and ID drift that real HR data exhibits — legal names, preferred names, shortened names, marriage name changes, contractor-to-FTE conversions, terminations and rehires, and inter-system ID schema mismatches.
-2. **Resolves identity** through a deterministic matching layer with explicit, auditable rules — not a black-box ML model. (An optional ML residual layer handles the long tail.)
+2. **Resolves identity** through a deterministic matching layer with explicit, auditable rules. An optional residual review layer helps stewards inspect the long tail without changing canonical records automatically.
 3. **Produces a canonical `dim_employee`** as a Type 2 slowly-changing dimension with full effective-dating, so point-in-time queries return correct answers.
 4. **Snapshots the workforce daily** into a date-spine fact table that supports any "what was true on date X" question — headcount, tenure, attrition cohort.
 5. **Exposes metrics through a privacy-aware semantic layer** — k-anonymity guards on small cohorts, field whitelisting, and audit logging.
@@ -134,14 +131,14 @@ wraps that matcher in a richer review package:
 - `identity_engine/residual_matcher.py` scores candidate canonical people with
   name, email-local-part, hire-date, and deterministic-hint features.
 - `identity_engine/evaluation.py` summarizes review coverage and optional proxy
-  evaluation against stewardship deterministic hints.
+  ranking diagnostics against stewardship deterministic hints.
 - Recommendations are review-only: `high_confidence_review`,
   `possible_review`, or `do_not_suggest`.
 - The engine never writes back to `int_canonical_person`; HR/data stewardship
   remains the control point for anything below the deterministic threshold.
 - Sensitive fields such as SIN_LAST_4, full email, and DOB are not selected by
-  the Phase 5 export path.
-- The optional proxy evaluation is a diagnostic artifact, not a production
+  the residual export path.
+- The optional proxy ranking diagnostic is a review artifact, not a production
   accuracy claim.
 
 Example export:
@@ -167,7 +164,7 @@ python -m identity_engine.cli residual-evaluate \
   --limit 500 \
   --top-n 3 \
   --minimum-score 0.75 \
-  --output docs/walkthroughs/residual-model-evaluation.md
+  --output docs/walkthroughs/residual-ranking-evaluation.md
 ```
 
 Latest verification:
@@ -230,7 +227,7 @@ atlas-people-analytics/
 ├── seeds/                    # Synthetic data generator (Faker + IBM HR Analytics seed)
 ├── dbt_project/              # Models, tests, macros, snapshots
 ├── airflow/                  # Production-shaped DAG
-├── identity_engine/          # ML residual matching (stretch chapter)
+├── identity_engine/          # Residual identity review tooling
 ├── api/                      # FastAPI privacy-aware metrics service
 ├── dashboard/                # Streamlit HRBP-facing demo
 ├── tests/                    # Python tests + chaos corruption suite
@@ -284,21 +281,10 @@ make dashboard
 
 - [Demo Script](docs/00-demo-script.md)
 - [Identity Drift Recovery Walkthrough](docs/walkthroughs/identity-drift-example.md)
-- [Residual Matching Model Card](docs/07-ml-residuals.md)
+- [Residual Review Card](docs/07-residual-review.md)
 - [Residual Review Walkthrough](docs/walkthroughs/residual-review-walkthrough.md)
 - [Residual Review Report](docs/walkthroughs/residual-review-report.md)
-- [Residual Proxy Evaluation](docs/walkthroughs/residual-model-evaluation.md)
-- [Atlas One-Page Brief](docs/interview/one-page-brief.md)
-- [Wealthsimple Interview Map](docs/interview/wealthsimple-role-map.md)
-- [Edward Demo Talk Track](docs/interview/edward-demo-talk-track.md)
-- [Two-Minute Demo Script](docs/interview/two-minute-demo-script.md)
-- [Productionization Plan And Metric Catalog](docs/interview/productionization-and-metric-catalog.md)
-- [Source Freshness And Reconciliation Plan](docs/interview/source-freshness-and-reconciliation.md)
-- [People Analytics SQL Practice](docs/interview/sql-practice.md)
-- [SQL Answer Walkthroughs](docs/interview/sql-answer-walkthroughs.md)
-- [Wealthsimple 30-60-90 Plan](docs/interview/wealthsimple-30-60-90.md)
-- [Live Demo Checklist](docs/interview/live-demo-checklist.md)
-- [Reviewer Release Note](docs/interview/reviewer-release-note.md)
+- [Residual Ranking Diagnostics](docs/walkthroughs/residual-ranking-evaluation.md)
 
 ## License
 

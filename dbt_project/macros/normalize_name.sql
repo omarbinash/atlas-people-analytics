@@ -17,12 +17,12 @@
 
   Non-Latin scripts (zh_CN, ar_AA): returns empty string after non-alpha
   strip. The matcher relies on email-domain anchors (Pass 3) for cross-script
-  identity resolution — see CLAUDE.md and the anchor table memory.
+  identity resolution.
 
   Tradeoff: pure SQL keeps the warehouse self-contained and the function
   inlinable for query optimization. Python UDF using `unidecode` would
   give full Unicode transliteration but adds Snowpark infrastructure and
-  costs more per row. Revisit if Phase 5 ML matching needs CJK name roots.
+  costs more per row. Revisit if future residual matching needs CJK name roots.
 -#}
 
 {% macro normalize_name(col) -%}
