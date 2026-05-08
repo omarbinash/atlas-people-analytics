@@ -13,7 +13,7 @@ seeds:
       Inverted from `seeds/name_strategies.py:NICKNAME_MAP` (which is
       one-to-many: canonical -> [nickname1, nickname2, ...]).
 
-      EXCLUSION POLICY — ambiguous nicknames are deliberately omitted:
+      EXCLUSION POLICY - ambiguous nicknames are deliberately omitted:
         - 'steve'       could be Steven or Stephen
         - 'kate' / 'katie' could be Catherine or Katherine
         - 'alex' / 'sasha' could be Alexander or Alexandra
@@ -31,7 +31,7 @@ seeds:
       These cases will not match on first_name_root alone. They rely on
       independent anchors (email, DOB, hire_date) to resolve. If no
       independent anchor is available, the record routes to the
-      stewardship queue — which is the correct behavior because picking
+      stewardship queue - which is the correct behavior because picking
       the dominant interpretation could merge two distinct people.
 
       To extend: only add a row if the nickname resolves unambiguously to

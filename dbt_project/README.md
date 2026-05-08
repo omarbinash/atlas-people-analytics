@@ -18,7 +18,7 @@ canonical employee record, dimensional models, and people-analytics marts.
    ```
    The template uses `env_var()` so no edits should be needed if your
    `.env` is correctly populated. The shell needs to have those vars
-   exported when dbt runs — see "Running" below.
+   exported when dbt runs - see "Running" below.
 
 3. Install dbt packages:
    ```bash

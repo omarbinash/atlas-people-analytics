@@ -6,7 +6,7 @@
 }}
 
 -- =============================================================================
--- int_stewardship_queue — Phase 2C manual review surface
+-- int_stewardship_queue - Phase 2C manual review surface
 -- =============================================================================
 -- One row per non-HRIS source identity that did not qualify for deterministic
 -- auto-merge. This is not a failure table; it is the control surface that keeps

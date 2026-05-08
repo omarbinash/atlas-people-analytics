@@ -1,5 +1,5 @@
 # =============================================================================
-# first_name_root macro spec — written BEFORE the macro implementation
+# first_name_root macro spec - written BEFORE the macro implementation
 # =============================================================================
 # This file is the human-readable spec. The executable form lives at
 # `tests/macros/test_first_name_root.sql` and must mirror these cases exactly.
@@ -12,7 +12,7 @@
 #
 # The seed `nickname_map.csv` deliberately excludes ambiguous nicknames
 # (steve, alex, sam, chris, charlie, ed, andy, mo, pat, rick, frank). For those
-# inputs, the macro returns the normalized literal — which matches OTHER rows
+# inputs, the macro returns the normalized literal - which matches OTHER rows
 # with the same literal but cannot collapse e.g. Steven and Stephen. Those
 # cases route to stewardship via independent anchors. See `_seeds.yml` for the
 # full exclusion policy and rationale.
@@ -67,7 +67,7 @@ cases:
 
   - id: 10
     description: |
-      Ambiguous nickname passes through — 'Steve' is deliberately not mapped
+      Ambiguous nickname passes through - 'Steve' is deliberately not mapped
       because it could be Steven OR Stephen. Both legal forms will normalize
       to themselves; matching across them requires an independent anchor.
     input: "Steve"

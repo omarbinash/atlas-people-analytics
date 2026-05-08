@@ -6,7 +6,7 @@
 }}
 
 -- =============================================================================
--- int_dms_erp_unified — Phase 2C, Pass 0 (structural FK merge)
+-- int_dms_erp_unified - Phase 2C, Pass 0 (structural FK merge)
 -- =============================================================================
 -- Graph-merge of DMS users and ERP users via the hard FK
 -- ERP.LINKED_DMS_USER_ID -> DMS.DMS_USER_ID. One row per DMS+ERP person,
@@ -17,11 +17,11 @@
 --   DMS_AND_ERP (~90%):       DMS user with linked ERP user
 --   DMS_ONLY:                 DMS user with no ERP account
 --   ERP_ONLY_BROKEN_LINK:     ERP user whose linked_dms_user_id is NULL
---                             (~10% of ERP rows — modeled drift in the synth)
+--                             (~10% of ERP rows - modeled drift in the synth)
 --
 -- Pass 0 is structural, not probabilistic. Matched (dms_user_id, erp_user_id)
 -- pairs get confidence = 1.0 in match_confidence and bypass the >=2-anchor
--- floor — the FK is deterministic. Downstream passes trust this linkage when
+-- floor - the FK is deterministic. Downstream passes trust this linkage when
 -- joining the unified DMS+ERP person to HRIS / ATS / payroll / CRM.
 --
 -- After this model, DMS and ERP do NOT appear separately in any Phase 2C
@@ -30,9 +30,9 @@
 -- ---------------------------------------------------------------------------
 -- Topology assumption: each DMS user has at most one ERP user pointing back
 -- via linked_dms_user_id. Holds in this synthesizer (1:0..1 per person). If
--- real-world data introduces 1:N (rare — multiple ERP accounts per DMS user),
+-- real-world data introduces 1:N (rare - multiple ERP accounts per DMS user),
 -- the unique tests on dms_user_id will fail loudly. That's the right
--- behavior — we want to surface the assumption violation, not silently
+-- behavior - we want to surface the assumption violation, not silently
 -- aggregate. A v2 could group by dms_user_id and array_agg the erp_user_ids;
 -- defer that until a real case appears.
 -- ---------------------------------------------------------------------------
@@ -50,7 +50,7 @@
 --   last_name_original          Original casing for display
 --   dms_username             DMS-only (NULL when has_dms = false)
 --   erp_email                ERP-only
---   erp_email_local_part     ERP-only — Pass 1 anchor against HRIS work email
+--   erp_email_local_part     ERP-only - Pass 1 anchor against HRIS work email
 --   ... + DMS-only and ERP-only org/lifecycle context preserved
 -- =============================================================================
 

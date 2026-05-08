@@ -61,16 +61,16 @@ models:
   - name: stg_payroll__records
     description: |
       Cleaned 1:1 view of RAW_PAYROLL_RECORDS. One row per pay period (~monthly).
-      Uses LEGAL name. Note: payroll often LAGS HRIS on name updates — same
+      Uses LEGAL name. Note: payroll often LAGS HRIS on name updates - same
       person may appear here under pre-marriage name long after HRIS updated.
-      SIN_LAST_4 is sensitive — restrict access at marts layer.
+      SIN_LAST_4 is sensitive - restrict access at marts layer.
     columns:
       - name: payroll_record_id
         tests: [not_null, unique]
       - name: employee_payroll_id
         description: |
           Payroll's internal ID, separate from HRIS_EMPLOYEE_ID. Stable across
-          pay periods within a single employment spell — useful identity anchor.
+          pay periods within a single employment spell - useful identity anchor.
         tests: [not_null]
       - name: legal_first_name
         tests: [not_null]
@@ -118,7 +118,7 @@ models:
   - name: stg_erp__users
     description: |
       Cleaned 1:1 view of RAW_ERP_USERS. ~10% of rows have linked_dms_user_id
-      NULL — modeling real-world manual data drift.
+      NULL - modeling real-world manual data drift.
     columns:
       - name: erp_user_id
         tests: [not_null, unique]

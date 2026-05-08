@@ -3,7 +3,7 @@
 -- =============================================================================
 -- Singular test that exercises the normalize_name macro against the cases
 -- enumerated in fixtures/normalize_name.yml. Mirror those cases here
--- exactly — if you add a case there, add it here in the same order.
+-- exactly - if you add a case there, add it here in the same order.
 --
 -- Test passes when zero rows are returned. Each returned row is a failing
 -- case with case_id, the input, the expected output, and the actual output.

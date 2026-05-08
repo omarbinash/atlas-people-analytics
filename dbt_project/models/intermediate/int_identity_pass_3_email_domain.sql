@@ -6,7 +6,7 @@
 }}
 
 -- =============================================================================
--- int_identity_pass_3_email_domain — company domain + email last-name token
+-- int_identity_pass_3_email_domain - company domain + email last-name token
 -- =============================================================================
 -- Pass 3 catches cases where exact email-local-part matching fails because the
 -- first-name component differs across systems (Robert/Bob, preferred names,

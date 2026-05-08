@@ -168,7 +168,7 @@ Each file below has a short purpose note followed by the full source. This is th
 
 ```makefile
 # =============================================================================
-# Atlas Makefile — the project's command surface
+# Atlas Makefile - the project's command surface
 #
 # Run `make help` to see all available targets.
 # =============================================================================
@@ -181,7 +181,7 @@ DBT_DIR := dbt_project
 
 # Default target
 help:
-	@echo "Atlas — People Analytics Foundation"
+	@echo "Atlas - People Analytics Foundation"
 	@echo ""
 	@echo "Setup:"
 	@echo "  install          Install Python dependencies (run inside a venv)"
@@ -363,7 +363,7 @@ ignore_missing_imports = true
 
 ```sql
 -- =============================================================================
--- Atlas — Snowflake Provisioning Script
+-- Atlas - Snowflake Provisioning Script
 -- =============================================================================
 -- This script creates a clean, isolated environment for the Atlas project:
 --   - A dedicated database (ATLAS) with schemas for each pipeline tier
@@ -389,7 +389,7 @@ CREATE WAREHOUSE IF NOT EXISTS ATLAS_WH
 -- Database and schemas (medallion architecture)
 -- -----------------------------------------------------------------------------
 CREATE DATABASE IF NOT EXISTS ATLAS
-    COMMENT = 'Atlas — canonical employee record + people analytics';
+    COMMENT = 'Atlas - canonical employee record + people analytics';
 
 USE DATABASE ATLAS;
 
@@ -397,16 +397,16 @@ CREATE SCHEMA IF NOT EXISTS RAW
     COMMENT = 'Untransformed source-system mirrors. Loaded by seed pipeline.';
 
 CREATE SCHEMA IF NOT EXISTS STAGING
-    COMMENT = 'dbt staging models — type-cast and renamed source mirrors.';
+    COMMENT = 'dbt staging models - type-cast and renamed source mirrors.';
 
 CREATE SCHEMA IF NOT EXISTS INTERMEDIATE
-    COMMENT = 'dbt intermediate models — identity resolution and matching.';
+    COMMENT = 'dbt intermediate models - identity resolution and matching.';
 
 CREATE SCHEMA IF NOT EXISTS MARTS_CORE
-    COMMENT = 'dbt marts — core dimensional models (dim_employee SCD2, facts).';
+    COMMENT = 'dbt marts - core dimensional models (dim_employee SCD2, facts).';
 
 CREATE SCHEMA IF NOT EXISTS MARTS_PEOPLE
-    COMMENT = 'dbt marts — People Analytics business-facing models.';
+    COMMENT = 'dbt marts - People Analytics business-facing models.';
 
 CREATE SCHEMA IF NOT EXISTS AUDIT
     COMMENT = 'Audit log for privacy-sensitive metric access.';
@@ -415,7 +415,7 @@ CREATE SCHEMA IF NOT EXISTS AUDIT
 -- Role: ATLAS_DEVELOPER (least-privilege for the pipeline)
 -- -----------------------------------------------------------------------------
 CREATE ROLE IF NOT EXISTS ATLAS_DEVELOPER
-    COMMENT = 'Developer role for the Atlas project — read/write on ATLAS DB only';
+    COMMENT = 'Developer role for the Atlas project - read/write on ATLAS DB only';
 
 -- Warehouse usage
 GRANT USAGE ON WAREHOUSE ATLAS_WH TO ROLE ATLAS_DEVELOPER;
@@ -425,7 +425,7 @@ GRANT OPERATE ON WAREHOUSE ATLAS_WH TO ROLE ATLAS_DEVELOPER;
 GRANT USAGE ON DATABASE ATLAS TO ROLE ATLAS_DEVELOPER;
 GRANT CREATE SCHEMA ON DATABASE ATLAS TO ROLE ATLAS_DEVELOPER;
 
--- Schema-level — full access to all Atlas schemas
+-- Schema-level - full access to all Atlas schemas
 GRANT ALL PRIVILEGES ON SCHEMA ATLAS.RAW TO ROLE ATLAS_DEVELOPER;
 GRANT ALL PRIVILEGES ON SCHEMA ATLAS.STAGING TO ROLE ATLAS_DEVELOPER;
 GRANT ALL PRIVILEGES ON SCHEMA ATLAS.INTERMEDIATE TO ROLE ATLAS_DEVELOPER;
@@ -470,7 +470,7 @@ ALTER USER OMARBINASH SET DEFAULT_NAMESPACE = ATLAS.RAW;
 
 ```sql
 -- =============================================================================
--- Atlas — Raw Source Tables
+-- Atlas - Raw Source Tables
 -- =============================================================================
 -- Five source systems, each with a different name representation strategy
 -- (the realistic mess we are about to model and resolve).
@@ -484,7 +484,7 @@ USE DATABASE ATLAS;
 USE SCHEMA RAW;
 
 -- -----------------------------------------------------------------------------
--- HRIS (BambooHR-shape) — legal first + last name, source of truth for employment
+-- HRIS (BambooHR-shape) - legal first + last name, source of truth for employment
 -- -----------------------------------------------------------------------------
 CREATE OR REPLACE TABLE RAW_HRIS_EMPLOYEES (
     HRIS_EMPLOYEE_ID         VARCHAR(32)   NOT NULL,
@@ -506,7 +506,7 @@ CREATE OR REPLACE TABLE RAW_HRIS_EMPLOYEES (
 );
 
 -- -----------------------------------------------------------------------------
--- ATS (Greenhouse-shape) — preferred name, only knows people from hire to start date
+-- ATS (Greenhouse-shape) - preferred name, only knows people from hire to start date
 -- -----------------------------------------------------------------------------
 CREATE OR REPLACE TABLE RAW_ATS_CANDIDATES (
     ATS_CANDIDATE_ID         VARCHAR(32)   NOT NULL,
@@ -523,7 +523,7 @@ CREATE OR REPLACE TABLE RAW_ATS_CANDIDATES (
 );
 
 -- -----------------------------------------------------------------------------
--- Payroll (ADP-shape) — legal name, includes SIN/last-4 (sensitive!)
+-- Payroll (ADP-shape) - legal name, includes SIN/last-4 (sensitive!)
 -- -----------------------------------------------------------------------------
 CREATE OR REPLACE TABLE RAW_PAYROLL_RECORDS (
     PAYROLL_RECORD_ID        VARCHAR(32)   NOT NULL,
@@ -541,7 +541,7 @@ CREATE OR REPLACE TABLE RAW_PAYROLL_RECORDS (
 );
 
 -- -----------------------------------------------------------------------------
--- CRM (Dabadu-shape) — preferred name, captures sales-floor activity
+-- CRM (Dabadu-shape) - preferred name, captures sales-floor activity
 -- -----------------------------------------------------------------------------
 CREATE OR REPLACE TABLE RAW_CRM_SALES_REPS (
     CRM_USER_ID              VARCHAR(32)   NOT NULL,
@@ -558,7 +558,7 @@ CREATE OR REPLACE TABLE RAW_CRM_SALES_REPS (
 );
 
 -- -----------------------------------------------------------------------------
--- DMS (PBS-shape) — shortened first name, deal flow + commissions
+-- DMS (PBS-shape) - shortened first name, deal flow + commissions
 -- This is the system that mirrors into the ERP
 -- -----------------------------------------------------------------------------
 CREATE OR REPLACE TABLE RAW_DMS_USERS (
@@ -574,7 +574,7 @@ CREATE OR REPLACE TABLE RAW_DMS_USERS (
 );
 
 -- -----------------------------------------------------------------------------
--- ERP (custom) — mirrors DMS but adds an internal user_id and audit trail
+-- ERP (custom) - mirrors DMS but adds an internal user_id and audit trail
 -- -----------------------------------------------------------------------------
 CREATE OR REPLACE TABLE RAW_ERP_USERS (
     ERP_USER_ID              VARCHAR(32)   NOT NULL,
@@ -756,7 +756,7 @@ class CanonicalIdentity:
 
     Generated once per synthetic employee, then projected into the five source
     systems with deliberate representation drift. This is the ground truth that
-    Atlas's identity-resolution layer is supposed to recover — without ever
+    Atlas's identity-resolution layer is supposed to recover - without ever
     seeing this struct directly.
     """
 
@@ -767,7 +767,7 @@ class CanonicalIdentity:
     short_first_name: str  # how it ends up in the DMS
     date_of_birth: str  # YYYY-MM-DD
     personal_email: str
-    work_email_local_part: str  # e.g. "sarah.kim" — combined with company domain
+    work_email_local_part: str  # e.g. "sarah.kim" - combined with company domain
 
 
 def _pick_preferred_from_legal(legal_first: str) -> str:
@@ -840,7 +840,7 @@ def normalize_name_for_matching(name: str) -> str:
 """
 Lifecycle event generation for the Atlas synthetic dataset.
 
-The hard part of canonical-employee-record matching is not the snapshot view —
+The hard part of canonical-employee-record matching is not the snapshot view -
 it's what happens *over time*:
 
     - Sarah Kim gets married → Sarah Kim-Patel → Sarah Patel (HRIS updated, DMS not)
@@ -881,7 +881,7 @@ class LifecycleEvent:
     person_id: str
     event_type: LifecycleEventType
     event_date: date
-    # Free-form payload — interpretation depends on event_type
+    # Free-form payload - interpretation depends on event_type
     payload: dict = field(default_factory=dict)
 
 
@@ -1043,7 +1043,7 @@ Atlas synthetic data generator.
 
 Generates a realistic, time-evolved population of synthetic employees and
 projects them into six operational source systems with deliberate name and
-identity drift — exactly the kind of mess a real People Analytics function
+identity drift - exactly the kind of mess a real People Analytics function
 inherits from the operational world.
 
 Pipeline:
@@ -1102,7 +1102,7 @@ logging.basicConfig(
 log = logging.getLogger("synthesize")
 
 # -----------------------------------------------------------------------------
-# Constants — calibrated to roughly match the 401-style dealership population
+# Constants - calibrated to roughly match the 401-style dealership population
 # -----------------------------------------------------------------------------
 COMPANY_EMAIL_DOMAIN = "atlas-co.com"
 
@@ -1141,7 +1141,7 @@ LOCATIONS = [
     ("CAL", "Calgary, AB"),
     ("OTT", "Ottawa, ON"),
     ("WAT", "Waterloo, ON"),
-    ("REM", "Remote — Canada"),
+    ("REM", "Remote - Canada"),
 ]
 
 EMPLOYMENT_TYPES = ["FTE", "FTE", "FTE", "FTE", "CONTRACTOR", "PART_TIME"]  # weighted
@@ -1380,7 +1380,7 @@ def _project_hris(
             current_hire_date = None
 
         elif ev.event_type == LifecycleEventType.REHIRE:
-            # Rehire creates a NEW HRIS_EMPLOYEE_ID — this is realistic and
+            # Rehire creates a NEW HRIS_EMPLOYEE_ID - this is realistic and
             # exactly the canonical-record-survives-rehires problem we want.
             rehire_count += 1
             current_hris_id = _id_for_system("HRIS", identity.person_id, f"_R{rehire_count}")
@@ -1407,7 +1407,7 @@ def _project_hris(
                     "HRIS", identity.person_id, f"_FTE"
                 )
 
-    # If no termination event was emitted, the person is still active —
+    # If no termination event was emitted, the person is still active -
     # write the current open spell now.
     if current_hire_date is not None:
         rows.append({
@@ -1918,7 +1918,7 @@ clean-targets:
   - "logs"
 
 # -----------------------------------------------------------------------------
-# Variables — overridable from CLI with `dbt run --vars '{...}'`
+# Variables - overridable from CLI with `dbt run --vars '{...}'`
 # -----------------------------------------------------------------------------
 vars:
   # Privacy: minimum cohort size for any aggregated metric to be returned.
@@ -1933,7 +1933,7 @@ vars:
   snapshot_as_of_date: null
 
 # -----------------------------------------------------------------------------
-# Model defaults — staging is views (cheap, always fresh), marts are tables
+# Model defaults - staging is views (cheap, always fresh), marts are tables
 # (cached, fast for downstream queries). Intermediate is ephemeral by default
 # but can be materialized as table for inspection during development.
 # -----------------------------------------------------------------------------
@@ -1971,7 +1971,7 @@ models:
         +schema: people_analytics
 
 # -----------------------------------------------------------------------------
-# Seed defaults — for any reference CSVs we add later (e.g., NICKNAME_MAP)
+# Seed defaults - for any reference CSVs we add later (e.g., NICKNAME_MAP)
 # -----------------------------------------------------------------------------
 seeds:
   atlas:
@@ -2063,7 +2063,7 @@ seeds:
       Inverted from `seeds/name_strategies.py:NICKNAME_MAP` (which is
       one-to-many: canonical -> [nickname1, nickname2, ...]).
 
-      EXCLUSION POLICY — ambiguous nicknames are deliberately omitted:
+      EXCLUSION POLICY - ambiguous nicknames are deliberately omitted:
         - 'steve'       could be Steven or Stephen
         - 'kate' / 'katie' could be Catherine or Katherine
         - 'alex' / 'sasha' could be Alexander or Alexandra
@@ -2081,7 +2081,7 @@ seeds:
       These cases will not match on first_name_root alone. They rely on
       independent anchors (email, DOB, hire_date) to resolve. If no
       independent anchor is available, the record routes to the
-      stewardship queue — which is the correct behavior because picking
+      stewardship queue - which is the correct behavior because picking
       the dominant interpretation could merge two distinct people.
 
       To extend: only add a row if the nickname resolves unambiguously to
@@ -2204,7 +2204,7 @@ lalo,eduardo
 
 ```yaml
 # =============================================================================
-# normalize_name macro spec — written BEFORE the macro implementation
+# normalize_name macro spec - written BEFORE the macro implementation
 # =============================================================================
 # This file is the human-readable spec. The executable form lives at
 # `tests/macros/test_normalize_name.sql` and must mirror these cases exactly.
@@ -2218,7 +2218,7 @@ lalo,eduardo
 # For non-Latin inputs the SQL macro returns an empty string after non-alpha
 # stripping; the Python function returns a Latin transliteration.
 #
-# This divergence is DELIBERATE — the matcher does not match across scripts via
+# This divergence is DELIBERATE - the matcher does not match across scripts via
 # name root. Cross-script identity resolution relies on email-domain anchors
 # (Pass 3), which the synthesizer guarantees are unidecode-transliterated and
 # therefore Latin-script regardless of the source name's script.
@@ -2285,13 +2285,13 @@ cases:
     expected: null
 
   - id: 12
-    description: Numerals stripped (defensive — names should not contain digits)
+    description: Numerals stripped (defensive - names should not contain digits)
     input: "Robert3"
     expected: "robert"
 
   - id: 13
     description: |
-      Non-Latin script (Chinese) — documented divergence from Python.
+      Non-Latin script (Chinese) - documented divergence from Python.
       Python unidecode transliterates "张伟" -> "zhangwei". The pure-SQL
       macro strips all non-Latin characters, returning empty string. The
       matcher relies on email anchors for these cases, not name root.
@@ -2300,13 +2300,13 @@ cases:
 
   - id: 14
     description: |
-      Non-Latin script (Arabic) — same divergence as case 13. Python
+      Non-Latin script (Arabic) - same divergence as case 13. Python
       unidecode transliterates "محمد" -> "mhmd". Pure-SQL returns empty.
     input: "محمد"
     expected: ""
 
   - id: 15
-    description: Polish accent (Latin Extended-A) — l-stroke
+    description: Polish accent (Latin Extended-A) - l-stroke
     input: "Łukasz"
     expected: "lukasz"
 ```
@@ -2319,7 +2319,7 @@ cases:
 
 ```yaml
 # =============================================================================
-# first_name_root macro spec — written BEFORE the macro implementation
+# first_name_root macro spec - written BEFORE the macro implementation
 # =============================================================================
 # This file is the human-readable spec. The executable form lives at
 # `tests/macros/test_first_name_root.sql` and must mirror these cases exactly.
@@ -2332,7 +2332,7 @@ cases:
 #
 # The seed `nickname_map.csv` deliberately excludes ambiguous nicknames
 # (steve, alex, sam, chris, charlie, ed, andy, mo, pat, rick, frank). For those
-# inputs, the macro returns the normalized literal — which matches OTHER rows
+# inputs, the macro returns the normalized literal - which matches OTHER rows
 # with the same literal but cannot collapse e.g. Steven and Stephen. Those
 # cases route to stewardship via independent anchors. See `_seeds.yml` for the
 # full exclusion policy and rationale.
@@ -2387,7 +2387,7 @@ cases:
 
   - id: 10
     description: |
-      Ambiguous nickname passes through — 'Steve' is deliberately not mapped
+      Ambiguous nickname passes through - 'Steve' is deliberately not mapped
       because it could be Steven OR Stephen. Both legal forms will normalize
       to themselves; matching across them requires an independent anchor.
     input: "Steve"
@@ -2426,7 +2426,7 @@ cases:
   normalize_name
 ============================================================================
   Lowercase + accent-strip + non-alpha-strip transformation for cross-source
-  name matching. Pure SQL — no Python UDFs, no extensions.
+  name matching. Pure SQL - no Python UDFs, no extensions.
 
   Implementation: TRIM -> TRANSLATE (Latin-1 + Latin Extended-A folding) ->
   LOWER -> REGEXP_REPLACE non-[a-z].
@@ -2492,13 +2492,13 @@ regexp_replace(
   ...where `input_col` matches the column passed to first_name_root and
   `alias` matches the second arg (default 'nm').
 
-  This couples the macro to the join, which is intentional — it forces the
+  This couples the macro to the join, which is intentional - it forces the
   caller to make the dependency explicit in the model SQL rather than
   hiding it in a correlated subquery (which would be slow at scale).
 
   Ambiguous nicknames (steve, alex, sam, chris, charlie, ed, andy, mo, pat,
   rick, frank) are deliberately omitted from nickname_map. For those, the
-  COALESCE falls back to the normalized literal — so 'Steve' returns
+  COALESCE falls back to the normalized literal - so 'Steve' returns
   'steve', not 'steven' or 'stephen'. Cross-resolving those cases requires
   an independent anchor (email, DOB) in the matcher's pass logic, or the
   record routes to stewardship. See seeds/_seeds.yml for the full exclusion
@@ -2519,19 +2519,19 @@ coalesce({{ alias }}.canonical_first_name, {{ normalize_name(input_col) }})
 ```sql
 {#-
 ============================================================================
-  match_confidence — three macros that codify the locked Phase 2C scoring
+  match_confidence - three macros that codify the locked Phase 2C scoring
 ============================================================================
 
   These macros emit SQL expressions that compute, per candidate match:
 
-    1. match_score          — additive confidence in [0.0, 1.0]
-    2. match_anchor_count   — count of medium-or-stronger independent anchors
-    3. auto_merge_qualified — boolean: passes the >=0.95 score AND >=2 anchor
+    1. match_score          - additive confidence in [0.0, 1.0]
+    2. match_anchor_count   - count of medium-or-stronger independent anchors
+    3. auto_merge_qualified - boolean: passes the >=0.95 score AND >=2 anchor
                               floor (or is a Pass-0 structural FK)
 
   Anchors and weights below mirror the locked table in
   `~/.claude/.../memory/phase_2c_anchor_table.md`. Edit weights ONLY by
-  updating the memory and the int_match_audit_log doc together — the
+  updating the memory and the int_match_audit_log doc together - the
   numbers are load-bearing and every change should be defensible.
 
   Anchor weights:
@@ -2549,7 +2549,7 @@ coalesce({{ alias }}.canonical_first_name, {{ normalize_name(input_col) }})
   short-circuits to score = 1.0 and bypasses the anchor count check, because
   it is a deterministic FK rather than a probabilistic match.
 
-  Caller usage — pass the BOOLEAN EXPRESSION as a string for each anchor that
+  Caller usage - pass the BOOLEAN EXPRESSION as a string for each anchor that
   applies. Anchors that don't apply for a given pass can be omitted (they
   default to 'false'):
 
@@ -2567,7 +2567,7 @@ coalesce({{ alias }}.canonical_first_name, {{ normalize_name(input_col) }})
       ) }} as match_anchor_count
 
   Yes, the same expressions get repeated. The alternative is a single macro
-  that emits multiple columns at once — possible via {%- set ... -%} in a
+  that emits multiple columns at once - possible via {%- set ... -%} in a
   parent CTE, but it sacrifices SQL readability. The repetition is the
   honest trade.
 -#}
@@ -2608,7 +2608,7 @@ end
 {#- =====================================================================
     match_anchor_count
     Counts only medium-or-stronger independent anchors. hire_date +/- 30d
-    alone does NOT count toward this — it's too weak (matches ~10% of
+    alone does NOT count toward this - it's too weak (matches ~10% of
     population for any given target hire_date).
 ========================================================================= -#}
 
@@ -2651,7 +2651,7 @@ end
 ```sql
 {#-
 ============================================================================
-  Privacy macros — Phase 3
+  Privacy macros - Phase 3
 ============================================================================
   Reusable SQL snippets for k-anonymity enforcement and privacy audit logging.
 
@@ -2794,12 +2794,12 @@ sources:
     tables:
 
       # -----------------------------------------------------------------------
-      # HRIS (BambooHR-shape) — system of record for employment status
+      # HRIS (BambooHR-shape) - system of record for employment status
       # -----------------------------------------------------------------------
       - name: RAW_HRIS_EMPLOYEES
         description: |
           BambooHR-style HRIS export. One row per employment spell. Rehires
-          generate a NEW HRIS_EMPLOYEE_ID — a critical part of the canonical-record
+          generate a NEW HRIS_EMPLOYEE_ID - a critical part of the canonical-record
           problem this project solves.
         columns:
           - name: HRIS_EMPLOYEE_ID
@@ -2818,7 +2818,7 @@ sources:
           - name: DATE_OF_BIRTH
             description: Used by identity matcher for cross-system disambiguation.
           - name: PERSONAL_EMAIL
-            description: "Personal email — useful as identity anchor."
+            description: "Personal email - useful as identity anchor."
           - name: WORK_EMAIL
             description: |
               Company email. Locked at hire and rarely updated, even after
@@ -2845,7 +2845,7 @@ sources:
           - name: LOCATION
 
       # -----------------------------------------------------------------------
-      # ATS (Greenhouse/Ashby-shape) — application records, captured pre-hire
+      # ATS (Greenhouse/Ashby-shape) - application records, captured pre-hire
       # -----------------------------------------------------------------------
       - name: RAW_ATS_CANDIDATES
         description: |
@@ -2872,12 +2872,12 @@ sources:
           - name: REQUISITION_JOB_TITLE
 
       # -----------------------------------------------------------------------
-      # Payroll (ADP-shape) — monthly records, lags HRIS on name updates
+      # Payroll (ADP-shape) - monthly records, lags HRIS on name updates
       # -----------------------------------------------------------------------
       - name: RAW_PAYROLL_RECORDS
         description: |
           ADP-shape monthly payroll records. Uses legal name, but does NOT
-          always pick up name changes (marriage, etc.) — a deliberate drift case.
+          always pick up name changes (marriage, etc.) - a deliberate drift case.
           Includes SIN_LAST_4 as sensitive identity anchor.
         columns:
           - name: PAYROLL_RECORD_ID
@@ -2892,7 +2892,7 @@ sources:
           - name: LEGAL_LAST_NAME
             tests: [not_null]
           - name: SIN_LAST_4
-            description: Sensitive — last 4 digits of SIN. Restrict access in marts.
+            description: Sensitive - last 4 digits of SIN. Restrict access in marts.
           - name: PAY_PERIOD_START
             tests: [not_null]
           - name: PAY_PERIOD_END
@@ -2903,7 +2903,7 @@ sources:
           - name: COST_CENTER
 
       # -----------------------------------------------------------------------
-      # CRM (Dabadu-shape) — sales-floor activity, preferred name
+      # CRM (Dabadu-shape) - sales-floor activity, preferred name
       # -----------------------------------------------------------------------
       - name: RAW_CRM_SALES_REPS
         description: |
@@ -2929,7 +2929,7 @@ sources:
           - name: DEACTIVATED_AT
 
       # -----------------------------------------------------------------------
-      # DMS (PBS-shape) — shortened first name typed-in-once
+      # DMS (PBS-shape) - shortened first name typed-in-once
       # -----------------------------------------------------------------------
       - name: RAW_DMS_USERS
         description: |
@@ -2952,12 +2952,12 @@ sources:
           - name: TERMINATED_DATE_DMS
 
       # -----------------------------------------------------------------------
-      # ERP — mirrors DMS but with broken FK link 10% of the time
+      # ERP - mirrors DMS but with broken FK link 10% of the time
       # -----------------------------------------------------------------------
       - name: RAW_ERP_USERS
         description: |
           ERP user records. Mostly mirrors DMS, but ~10% of LINKED_DMS_USER_IDs
-          are NULL — modeling real-world manual data drift where the DMS-ERP
+          are NULL - modeling real-world manual data drift where the DMS-ERP
           link is broken.
         columns:
           - name: ERP_USER_ID
@@ -3052,16 +3052,16 @@ models:
   - name: stg_payroll__records
     description: |
       Cleaned 1:1 view of RAW_PAYROLL_RECORDS. One row per pay period (~monthly).
-      Uses LEGAL name. Note: payroll often LAGS HRIS on name updates — same
+      Uses LEGAL name. Note: payroll often LAGS HRIS on name updates - same
       person may appear here under pre-marriage name long after HRIS updated.
-      SIN_LAST_4 is sensitive — restrict access at marts layer.
+      SIN_LAST_4 is sensitive - restrict access at marts layer.
     columns:
       - name: payroll_record_id
         tests: [not_null, unique]
       - name: employee_payroll_id
         description: |
           Payroll's internal ID, separate from HRIS_EMPLOYEE_ID. Stable across
-          pay periods within a single employment spell — useful identity anchor.
+          pay periods within a single employment spell - useful identity anchor.
         tests: [not_null]
       - name: legal_first_name
         tests: [not_null]
@@ -3109,7 +3109,7 @@ models:
   - name: stg_erp__users
     description: |
       Cleaned 1:1 view of RAW_ERP_USERS. ~10% of rows have linked_dms_user_id
-      NULL — modeling real-world manual data drift.
+      NULL - modeling real-world manual data drift.
     columns:
       - name: erp_user_id
         tests: [not_null, unique]
@@ -3287,7 +3287,7 @@ select * from renamed
 -- stg_payroll__records
 -- =============================================================================
 -- 1:1 mirror of RAW_PAYROLL_RECORDS.
--- Note: SIN_LAST_4 is sensitive — restrict access at the marts layer.
+-- Note: SIN_LAST_4 is sensitive - restrict access at the marts layer.
 -- Payroll often LAGS HRIS on name updates (e.g. marriage), so the same
 -- person may appear here under their pre-marriage name long after HRIS updated.
 -- =============================================================================
@@ -3537,9 +3537,9 @@ models:
           - not_null
           - unique
       - name: dms_user_id
-        description: Nullable — NULL for ERP_ONLY_BROKEN_LINK topology. Uniqueness enforced where not null by tests/intermediate/.
+        description: Nullable - NULL for ERP_ONLY_BROKEN_LINK topology. Uniqueness enforced where not null by tests/intermediate/.
       - name: erp_user_id
-        description: Nullable — NULL for DMS_ONLY topology. Uniqueness enforced where not null by tests/intermediate/.
+        description: Nullable - NULL for DMS_ONLY topology. Uniqueness enforced where not null by tests/intermediate/.
       - name: merge_topology
         description: Classification of which source systems contributed to this person.
         tests:
@@ -3621,7 +3621,7 @@ models:
       - name: employee_payroll_id
         description: |
           Stable spell-identity column. Embeds canonical person_id in the
-          synthesizer ("oracle leak") — used here ONLY for grouping equality,
+          synthesizer ("oracle leak") - used here ONLY for grouping equality,
           NEVER parsed for cross-source matching.
         tests:
           - not_null
@@ -3648,7 +3648,7 @@ models:
         tests: [not_null]
       - name: sin_last_4_distinct_count
         description: |
-          Diagnostic only — count of distinct SIN_LAST_4 values seen across
+          Diagnostic only - count of distinct SIN_LAST_4 values seen across
           this spell's pay periods. The synthesizer regenerates SIN per
           period, so this typically equals pay_period_count. NEVER use as a
           matching anchor.
@@ -3833,7 +3833,7 @@ models:
 }}
 
 -- =============================================================================
--- int_identity_source_nodes — Phase 2C common matching grain
+-- int_identity_source_nodes - Phase 2C common matching grain
 -- =============================================================================
 -- Puts each matchable source-system identity onto one normalized shape before
 -- the deterministic passes run. This model deliberately keeps the grain close
@@ -4151,7 +4151,7 @@ select * from dms_erp_nodes
 }}
 
 -- =============================================================================
--- int_hris_persons — Phase 2C, Step 1 prep
+-- int_hris_persons - Phase 2C, Step 1 prep
 -- =============================================================================
 -- Collapses HRIS rehires + contractor-to-FTE transitions into one row per
 -- HRIS-distinct person. Each input row in stg_hris__employees represents one
@@ -4167,7 +4167,7 @@ select * from dms_erp_nodes
 --     updated. Same person across rehires has the same DOB.
 --   * personal_email_local_part is set at canonical-identity creation
 --     (synthesize.py: identity.personal_email) and persists across every
---     employment spell — marriage doesn't change it, rehire doesn't change it.
+--     employment spell - marriage doesn't change it, rehire doesn't change it.
 --
 -- Why not (date_of_birth, normalize_name(legal_last_name))? Because
 -- legal_last_name CAN change between spells: a marriage event during spell N
@@ -4175,7 +4175,7 @@ select * from dms_erp_nodes
 -- spell N captures the post-marriage name. The next rehire (spell N+1)
 -- starts with that post-marriage name. So two spells for one person CAN
 -- have different last_names if any prior spell saw a marriage event. Last-
--- name grouping would silently fail to collapse those cases — we'd see them
+-- name grouping would silently fail to collapse those cases - we'd see them
 -- as two distinct persons.
 --
 -- Why not date_of_birth alone? In a 5K-employee population with ~14,600
@@ -4198,7 +4198,7 @@ select * from dms_erp_nodes
 --
 -- ---------------------------------------------------------------------------
 -- Output grain: one row per HRIS-distinct person. Output `hris_person_key`
--- is the surrogate hash of the grouping key — NOT the final cross-source
+-- is the surrogate hash of the grouping key - NOT the final cross-source
 -- canonical_person_id. That gets computed in int_canonical_person after all
 -- passes have run.
 -- =============================================================================
@@ -4306,12 +4306,12 @@ select * from with_flags_and_key
 }}
 
 -- =============================================================================
--- int_payroll_spells — Phase 2C, Step 1 prep
+-- int_payroll_spells - Phase 2C, Step 1 prep
 -- =============================================================================
 -- Collapses ~153K monthly pay-period rows in stg_payroll__records into one
 -- row per payroll spell (~5K rows). The grouping key is EMPLOYEE_PAYROLL_ID,
 -- which the synthesizer guarantees is stable across all pay periods within
--- a single employment spell (synthesize.py:479 — same payroll_emp_id used
+-- a single employment spell (synthesize.py:479 - same payroll_emp_id used
 -- for every monthly record in a spell).
 --
 -- This collapse is essential before downstream matching. Joining 153K
@@ -4324,14 +4324,14 @@ select * from with_flags_and_key
 -- ---------------------------------------------------------------------------
 -- EMPLOYEE_PAYROLL_ID embeds the canonical person_id in the synthesizer
 -- (PAY{YYYYMM}-{person_id[1:]} per synthesize.py:479). DO NOT parse the
--- numeric suffix to recover person_id — that is the synthesizer's "oracle
+-- numeric suffix to recover person_id - that is the synthesizer's "oracle
 -- leak" and using it would short-circuit the entire matcher. We use the
 -- column ONLY for grouping equality.
 --
 -- The legitimate signal extracted here is "spell continuity": every pay
 -- period within a single spell shares the same EMPLOYEE_PAYROLL_ID. That
 -- equality is the medium-strength anchor (+0.20) used in match_confidence,
--- valid only WITHIN payroll for spell collapse — NOT as a cross-source
+-- valid only WITHIN payroll for spell collapse - NOT as a cross-source
 -- bridge to HRIS.
 --
 -- See ~/.claude/.../memory/synthesizer_quirks.md for the full discussion of
@@ -4357,7 +4357,7 @@ select * from with_flags_and_key
 --   most_recent_*      -> name as of latest pay period (latest known state)
 --
 -- For Pass 2 matching, prefer first_observed_legal_last_name on the payroll
--- side joined against canonical_legal_last_name on the HRIS side — both
+-- side joined against canonical_legal_last_name on the HRIS side - both
 -- anchored to "as of earliest known observation."
 --
 -- ---------------------------------------------------------------------------
@@ -4418,7 +4418,7 @@ spell_aggs as (
         -- ---- Diagnostic surfaces ----
         -- SIN_LAST_4 is unstable within a spell (regenerated per pay period
         -- by the synthesizer). Surfaced as count of distinct values for
-        -- visibility — should equal pay_period_count for any spell longer
+        -- visibility - should equal pay_period_count for any spell longer
         -- than a few periods. NEVER use as a matching anchor.
         count(distinct sin_last_4)                                                as sin_last_4_distinct_count,
 
@@ -4457,7 +4457,7 @@ select * from with_flags_and_key
 }}
 
 -- =============================================================================
--- int_dms_erp_unified — Phase 2C, Pass 0 (structural FK merge)
+-- int_dms_erp_unified - Phase 2C, Pass 0 (structural FK merge)
 -- =============================================================================
 -- Graph-merge of DMS users and ERP users via the hard FK
 -- ERP.LINKED_DMS_USER_ID -> DMS.DMS_USER_ID. One row per DMS+ERP person,
@@ -4468,11 +4468,11 @@ select * from with_flags_and_key
 --   DMS_AND_ERP (~90%):       DMS user with linked ERP user
 --   DMS_ONLY:                 DMS user with no ERP account
 --   ERP_ONLY_BROKEN_LINK:     ERP user whose linked_dms_user_id is NULL
---                             (~10% of ERP rows — modeled drift in the synth)
+--                             (~10% of ERP rows - modeled drift in the synth)
 --
 -- Pass 0 is structural, not probabilistic. Matched (dms_user_id, erp_user_id)
 -- pairs get confidence = 1.0 in match_confidence and bypass the >=2-anchor
--- floor — the FK is deterministic. Downstream passes trust this linkage when
+-- floor - the FK is deterministic. Downstream passes trust this linkage when
 -- joining the unified DMS+ERP person to HRIS / ATS / payroll / CRM.
 --
 -- After this model, DMS and ERP do NOT appear separately in any Phase 2C
@@ -4481,9 +4481,9 @@ select * from with_flags_and_key
 -- ---------------------------------------------------------------------------
 -- Topology assumption: each DMS user has at most one ERP user pointing back
 -- via linked_dms_user_id. Holds in this synthesizer (1:0..1 per person). If
--- real-world data introduces 1:N (rare — multiple ERP accounts per DMS user),
+-- real-world data introduces 1:N (rare - multiple ERP accounts per DMS user),
 -- the unique tests on dms_user_id will fail loudly. That's the right
--- behavior — we want to surface the assumption violation, not silently
+-- behavior - we want to surface the assumption violation, not silently
 -- aggregate. A v2 could group by dms_user_id and array_agg the erp_user_ids;
 -- defer that until a real case appears.
 -- ---------------------------------------------------------------------------
@@ -4501,7 +4501,7 @@ select * from with_flags_and_key
 --   last_name_original          Original casing for display
 --   dms_username             DMS-only (NULL when has_dms = false)
 --   erp_email                ERP-only
---   erp_email_local_part     ERP-only — Pass 1 anchor against HRIS work email
+--   erp_email_local_part     ERP-only - Pass 1 anchor against HRIS work email
 --   ... + DMS-only and ERP-only org/lifecycle context preserved
 -- =============================================================================
 
@@ -4594,7 +4594,7 @@ select * from keyed
 }}
 
 -- =============================================================================
--- int_identity_pass_1_hard_anchors — government/email anchors
+-- int_identity_pass_1_hard_anchors - government/email anchors
 -- =============================================================================
 -- Pass 1 is reserved for high-certainty anchors:
 --
@@ -4723,7 +4723,7 @@ inner join candidate_counts
 }}
 
 -- =============================================================================
--- int_identity_pass_2_name_dob_hire — normalized name + DOB + hire proximity
+-- int_identity_pass_2_name_dob_hire - normalized name + DOB + hire proximity
 -- =============================================================================
 -- Pass 2 implements the locked deterministic rule:
 --
@@ -4887,7 +4887,7 @@ from scored
 }}
 
 -- =============================================================================
--- int_identity_pass_3_email_domain — company domain + email last-name token
+-- int_identity_pass_3_email_domain - company domain + email last-name token
 -- =============================================================================
 -- Pass 3 catches cases where exact email-local-part matching fails because the
 -- first-name component differs across systems (Robert/Bob, preferred names,
@@ -5055,7 +5055,7 @@ from scored
 }}
 
 -- =============================================================================
--- int_canonical_person — Phase 2C unified identity output
+-- int_canonical_person - Phase 2C unified identity output
 -- =============================================================================
 -- One row per canonical person, seeded from int_hris_persons and enriched with
 -- source-system identifiers that passed deterministic auto-merge.
@@ -5306,7 +5306,7 @@ left join erp_matches erp
 }}
 
 -- =============================================================================
--- int_stewardship_queue — Phase 2C manual review surface
+-- int_stewardship_queue - Phase 2C manual review surface
 -- =============================================================================
 -- One row per non-HRIS source identity that did not qualify for deterministic
 -- auto-merge. This is not a failure table; it is the control surface that keeps
@@ -5565,7 +5565,7 @@ models:
 }}
 
 -- =============================================================================
--- dim_employee — Phase 2D core SCD2-style employee dimension
+-- dim_employee - Phase 2D core SCD2-style employee dimension
 -- =============================================================================
 -- One row per canonical person employment spell. This is the effective-dated
 -- employee dimension that downstream point-in-time facts join to.
@@ -5685,7 +5685,7 @@ from joined
 }}
 
 -- =============================================================================
--- fct_workforce_daily — Phase 2D daily point-in-time workforce snapshot
+-- fct_workforce_daily - Phase 2D daily point-in-time workforce snapshot
 -- =============================================================================
 -- One row per employee spell per calendar date from hire date through either:
 --
@@ -5971,7 +5971,7 @@ exposures:
 }}
 
 -- =============================================================================
--- workforce_headcount_daily — privacy-preserving daily headcount
+-- workforce_headcount_daily - privacy-preserving daily headcount
 -- =============================================================================
 -- Public People Analytics mart for daily active headcount by common HRBP
 -- dimensions. Exact metrics are suppressed when the cohort size is below
@@ -6047,7 +6047,7 @@ from cohorts
 }}
 
 -- =============================================================================
--- workforce_attrition_monthly — privacy-preserving monthly attrition
+-- workforce_attrition_monthly - privacy-preserving monthly attrition
 -- =============================================================================
 -- Public monthly attrition mart by HRBP dimensions. The privacy cohort is the
 -- active population at the start of the month for that dimension combination.
@@ -6180,7 +6180,7 @@ from cohorts
 }}
 
 -- =============================================================================
--- privacy_suppression_summary — Phase 3 privacy observability
+-- privacy_suppression_summary - Phase 3 privacy observability
 -- =============================================================================
 -- Summarizes how often each public People Analytics mart suppresses metrics.
 -- This gives reviewers a quick way to see whether k-anonymity is doing real
@@ -6261,7 +6261,7 @@ from attrition
 }}
 
 -- =============================================================================
--- privacy_audit_log — Phase 3 access audit table
+-- privacy_audit_log - Phase 3 access audit table
 -- =============================================================================
 -- Empty-on-build audit table for future FastAPI / Streamlit access events.
 -- The `insert_privacy_audit_event` macro inserts rows into this table.
@@ -6299,7 +6299,7 @@ where false
 -- =============================================================================
 -- Singular test that exercises the normalize_name macro against the cases
 -- enumerated in fixtures/normalize_name.yml. Mirror those cases here
--- exactly — if you add a case there, add it here in the same order.
+-- exactly - if you add a case there, add it here in the same order.
 --
 -- Test passes when zero rows are returned. Each returned row is a failing
 -- case with case_id, the input, the expected output, and the actual output.
@@ -6593,7 +6593,7 @@ where has_broken_link = true and has_erp = false
 ```sql
 -- dms_user_id must be unique across the unified set when present. This
 -- enforces the bipartite-1:0..1 topology assumption documented in
--- int_dms_erp_unified.sql — if a real-world dataset ever introduces 1:N
+-- int_dms_erp_unified.sql - if a real-world dataset ever introduces 1:N
 -- (multiple ERP rows pointing to the same DMS), this test fails loudly
 -- and we know to add aggregation logic before continuing.
 select dms_user_id, count(*) as rows_with_this_dms_user_id

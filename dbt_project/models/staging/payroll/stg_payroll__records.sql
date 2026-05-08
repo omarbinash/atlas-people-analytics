@@ -9,7 +9,7 @@
 -- stg_payroll__records
 -- =============================================================================
 -- 1:1 mirror of RAW_PAYROLL_RECORDS.
--- Note: SIN_LAST_4 is sensitive — restrict access at the marts layer.
+-- Note: SIN_LAST_4 is sensitive - restrict access at the marts layer.
 -- Payroll often LAGS HRIS on name updates (e.g. marriage), so the same
 -- person may appear here under their pre-marriage name long after HRIS updated.
 -- =============================================================================

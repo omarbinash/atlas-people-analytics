@@ -3,7 +3,7 @@
   normalize_name
 ============================================================================
   Lowercase + accent-strip + non-alpha-strip transformation for cross-source
-  name matching. Pure SQL — no Python UDFs, no extensions.
+  name matching. Pure SQL - no Python UDFs, no extensions.
 
   Implementation: TRIM -> TRANSLATE (Latin-1 + Latin Extended-A folding) ->
   LOWER -> REGEXP_REPLACE non-[a-z].

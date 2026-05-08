@@ -6,7 +6,7 @@
 }}
 
 -- =============================================================================
--- workforce_attrition_monthly — privacy-preserving monthly attrition
+-- workforce_attrition_monthly - privacy-preserving monthly attrition
 -- =============================================================================
 -- Public monthly attrition mart by HRBP dimensions. The privacy cohort is the
 -- active population at the start of the month for that dimension combination.

@@ -6,7 +6,7 @@
 }}
 
 -- =============================================================================
--- int_hris_persons — Phase 2C, Step 1 prep
+-- int_hris_persons - Phase 2C, Step 1 prep
 -- =============================================================================
 -- Collapses HRIS rehires + contractor-to-FTE transitions into one row per
 -- HRIS-distinct person. Each input row in stg_hris__employees represents one
@@ -22,7 +22,7 @@
 --     updated. Same person across rehires has the same DOB.
 --   * personal_email_local_part is set at canonical-identity creation
 --     (synthesize.py: identity.personal_email) and persists across every
---     employment spell — marriage doesn't change it, rehire doesn't change it.
+--     employment spell - marriage doesn't change it, rehire doesn't change it.
 --
 -- Why not (date_of_birth, normalize_name(legal_last_name))? Because
 -- legal_last_name CAN change between spells: a marriage event during spell N
@@ -30,7 +30,7 @@
 -- spell N captures the post-marriage name. The next rehire (spell N+1)
 -- starts with that post-marriage name. So two spells for one person CAN
 -- have different last_names if any prior spell saw a marriage event. Last-
--- name grouping would silently fail to collapse those cases — we'd see them
+-- name grouping would silently fail to collapse those cases - we'd see them
 -- as two distinct persons.
 --
 -- Why not date_of_birth alone? In a 5K-employee population with ~14,600
@@ -53,7 +53,7 @@
 --
 -- ---------------------------------------------------------------------------
 -- Output grain: one row per HRIS-distinct person. Output `hris_person_key`
--- is the surrogate hash of the grouping key — NOT the final cross-source
+-- is the surrogate hash of the grouping key - NOT the final cross-source
 -- canonical_person_id. That gets computed in int_canonical_person after all
 -- passes have run.
 -- =============================================================================

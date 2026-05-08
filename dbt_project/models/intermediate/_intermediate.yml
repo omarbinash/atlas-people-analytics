@@ -16,9 +16,9 @@ models:
           - not_null
           - unique
       - name: dms_user_id
-        description: Nullable — NULL for ERP_ONLY_BROKEN_LINK topology. Uniqueness enforced where not null by tests/intermediate/.
+        description: Nullable - NULL for ERP_ONLY_BROKEN_LINK topology. Uniqueness enforced where not null by tests/intermediate/.
       - name: erp_user_id
-        description: Nullable — NULL for DMS_ONLY topology. Uniqueness enforced where not null by tests/intermediate/.
+        description: Nullable - NULL for DMS_ONLY topology. Uniqueness enforced where not null by tests/intermediate/.
       - name: merge_topology
         description: Classification of which source systems contributed to this person.
         tests:
@@ -100,7 +100,7 @@ models:
       - name: employee_payroll_id
         description: |
           Stable spell-identity column. Embeds canonical person_id in the
-          synthesizer ("oracle leak") — used here ONLY for grouping equality,
+          synthesizer ("oracle leak") - used here ONLY for grouping equality,
           NEVER parsed for cross-source matching.
         tests:
           - not_null
@@ -127,7 +127,7 @@ models:
         tests: [not_null]
       - name: sin_last_4_distinct_count
         description: |
-          Diagnostic only — count of distinct SIN_LAST_4 values seen across
+          Diagnostic only - count of distinct SIN_LAST_4 values seen across
           this spell's pay periods. The synthesizer regenerates SIN per
           period, so this typically equals pay_period_count. NEVER use as a
           matching anchor.

@@ -6,7 +6,7 @@
 }}
 
 -- =============================================================================
--- int_canonical_person — Phase 2C unified identity output
+-- int_canonical_person - Phase 2C unified identity output
 -- =============================================================================
 -- One row per canonical person, seeded from int_hris_persons and enriched with
 -- source-system identifiers that passed deterministic auto-merge.

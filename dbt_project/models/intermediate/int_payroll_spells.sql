@@ -6,12 +6,12 @@
 }}
 
 -- =============================================================================
--- int_payroll_spells — Phase 2C, Step 1 prep
+-- int_payroll_spells - Phase 2C, Step 1 prep
 -- =============================================================================
 -- Collapses ~153K monthly pay-period rows in stg_payroll__records into one
 -- row per payroll spell (~5K rows). The grouping key is EMPLOYEE_PAYROLL_ID,
 -- which the synthesizer guarantees is stable across all pay periods within
--- a single employment spell (synthesize.py:479 — same payroll_emp_id used
+-- a single employment spell (synthesize.py:479 - same payroll_emp_id used
 -- for every monthly record in a spell).
 --
 -- This collapse is essential before downstream matching. Joining 153K
@@ -24,14 +24,14 @@
 -- ---------------------------------------------------------------------------
 -- EMPLOYEE_PAYROLL_ID embeds the canonical person_id in the synthesizer
 -- (PAY{YYYYMM}-{person_id[1:]} per synthesize.py:479). DO NOT parse the
--- numeric suffix to recover person_id — that is the synthesizer's "oracle
+-- numeric suffix to recover person_id - that is the synthesizer's "oracle
 -- leak" and using it would short-circuit the entire matcher. We use the
 -- column ONLY for grouping equality.
 --
 -- The legitimate signal extracted here is "spell continuity": every pay
 -- period within a single spell shares the same EMPLOYEE_PAYROLL_ID. That
 -- equality is the medium-strength anchor (+0.20) used in match_confidence,
--- valid only WITHIN payroll for spell collapse — NOT as a cross-source
+-- valid only WITHIN payroll for spell collapse - NOT as a cross-source
 -- bridge to HRIS.
 --
 -- See ~/.claude/.../memory/synthesizer_quirks.md for the full discussion of
@@ -57,7 +57,7 @@
 --   most_recent_*      -> name as of latest pay period (latest known state)
 --
 -- For Pass 2 matching, prefer first_observed_legal_last_name on the payroll
--- side joined against canonical_legal_last_name on the HRIS side — both
+-- side joined against canonical_legal_last_name on the HRIS side - both
 -- anchored to "as of earliest known observation."
 --
 -- ---------------------------------------------------------------------------
@@ -118,7 +118,7 @@ spell_aggs as (
         -- ---- Diagnostic surfaces ----
         -- SIN_LAST_4 is unstable within a spell (regenerated per pay period
         -- by the synthesizer). Surfaced as count of distinct values for
-        -- visibility — should equal pay_period_count for any spell longer
+        -- visibility - should equal pay_period_count for any spell longer
         -- than a few periods. NEVER use as a matching anchor.
         count(distinct sin_last_4)                                                as sin_last_4_distinct_count,
 

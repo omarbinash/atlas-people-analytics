@@ -8,7 +8,7 @@
 }}
 
 -- =============================================================================
--- privacy_audit_log — Phase 3 access audit table
+-- privacy_audit_log - Phase 3 access audit table
 -- =============================================================================
 -- Empty-on-build audit table for future FastAPI / Streamlit access events.
 -- The `insert_privacy_audit_event` macro inserts rows into this table.

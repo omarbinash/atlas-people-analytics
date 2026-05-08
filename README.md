@@ -1,4 +1,4 @@
-# Atlas — Canonical Employee Record for People Analytics
+# Atlas - Canonical Employee Record for People Analytics
 
 > Atlas is a synthetic People Analytics reference project that builds a governed employee identity spine across messy operational systems, then uses that spine to power point-in-time workforce metrics, privacy-safe marts, an API, and a dashboard.
 

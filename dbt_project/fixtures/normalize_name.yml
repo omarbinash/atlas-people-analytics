@@ -1,5 +1,5 @@
 # =============================================================================
-# normalize_name macro spec — written BEFORE the macro implementation
+# normalize_name macro spec - written BEFORE the macro implementation
 # =============================================================================
 # This file is the human-readable spec. The executable form lives at
 # `tests/macros/test_normalize_name.sql` and must mirror these cases exactly.
@@ -13,7 +13,7 @@
 # For non-Latin inputs the SQL macro returns an empty string after non-alpha
 # stripping; the Python function returns a Latin transliteration.
 #
-# This divergence is DELIBERATE — the matcher does not match across scripts via
+# This divergence is DELIBERATE - the matcher does not match across scripts via
 # name root. Cross-script identity resolution relies on email-domain anchors
 # (Pass 3), which the synthesizer guarantees are unidecode-transliterated and
 # therefore Latin-script regardless of the source name's script.
@@ -80,13 +80,13 @@ cases:
     expected: null
 
   - id: 12
-    description: Numerals stripped (defensive — names should not contain digits)
+    description: Numerals stripped (defensive - names should not contain digits)
     input: "Robert3"
     expected: "robert"
 
   - id: 13
     description: |
-      Non-Latin script (Chinese) — documented divergence from Python.
+      Non-Latin script (Chinese) - documented divergence from Python.
       Python unidecode transliterates "张伟" -> "zhangwei". The pure-SQL
       macro strips all non-Latin characters, returning empty string. The
       matcher relies on email anchors for these cases, not name root.
@@ -95,12 +95,12 @@ cases:
 
   - id: 14
     description: |
-      Non-Latin script (Arabic) — same divergence as case 13. Python
+      Non-Latin script (Arabic) - same divergence as case 13. Python
       unidecode transliterates "محمد" -> "mhmd". Pure-SQL returns empty.
     input: "محمد"
     expected: ""
 
   - id: 15
-    description: Polish accent (Latin Extended-A) — l-stroke
+    description: Polish accent (Latin Extended-A) - l-stroke
     input: "Łukasz"
     expected: "lukasz"

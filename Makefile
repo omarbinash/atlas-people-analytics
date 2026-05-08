@@ -1,5 +1,5 @@
 # =============================================================================
-# Atlas Makefile — the project's command surface
+# Atlas Makefile - the project's command surface
 #
 # Run `make help` to see all available targets.
 # =============================================================================
@@ -12,7 +12,7 @@ DBT_DIR := dbt_project
 
 # Default target
 help:
-	@echo "Atlas — People Analytics Foundation"
+	@echo "Atlas - People Analytics Foundation"
 	@echo ""
 	@echo "Setup:"
 	@echo "  install          Install Python dependencies (run inside a venv)"

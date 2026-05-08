@@ -6,7 +6,7 @@
 }}
 
 -- =============================================================================
--- int_identity_source_nodes — Phase 2C common matching grain
+-- int_identity_source_nodes - Phase 2C common matching grain
 -- =============================================================================
 -- Puts each matchable source-system identity onto one normalized shape before
 -- the deterministic passes run. This model deliberately keeps the grain close

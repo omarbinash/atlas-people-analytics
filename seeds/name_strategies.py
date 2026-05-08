@@ -142,7 +142,7 @@ class CanonicalIdentity:
 
     Generated once per synthetic employee, then projected into the five source
     systems with deliberate representation drift. This is the ground truth that
-    Atlas's identity-resolution layer is supposed to recover — without ever
+    Atlas's identity-resolution layer is supposed to recover - without ever
     seeing this struct directly.
     """
 
@@ -153,7 +153,7 @@ class CanonicalIdentity:
     short_first_name: str  # how it ends up in the DMS
     date_of_birth: str  # YYYY-MM-DD
     personal_email: str
-    work_email_local_part: str  # e.g. "sarah.kim" — combined with company domain
+    work_email_local_part: str  # e.g. "sarah.kim" - combined with company domain
 
 
 def _pick_preferred_from_legal(legal_first: str) -> str:

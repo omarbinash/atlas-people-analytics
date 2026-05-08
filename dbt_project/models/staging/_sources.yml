@@ -20,12 +20,12 @@ sources:
     tables:
 
       # -----------------------------------------------------------------------
-      # HRIS (BambooHR-shape) — system of record for employment status
+      # HRIS (BambooHR-shape) - system of record for employment status
       # -----------------------------------------------------------------------
       - name: RAW_HRIS_EMPLOYEES
         description: |
           BambooHR-style HRIS export. One row per employment spell. Rehires
-          generate a NEW HRIS_EMPLOYEE_ID — a critical part of the canonical-record
+          generate a NEW HRIS_EMPLOYEE_ID - a critical part of the canonical-record
           problem this project solves.
         columns:
           - name: HRIS_EMPLOYEE_ID
@@ -44,7 +44,7 @@ sources:
           - name: DATE_OF_BIRTH
             description: Used by identity matcher for cross-system disambiguation.
           - name: PERSONAL_EMAIL
-            description: "Personal email — useful as identity anchor."
+            description: "Personal email - useful as identity anchor."
           - name: WORK_EMAIL
             description: |
               Company email. Locked at hire and rarely updated, even after
@@ -71,7 +71,7 @@ sources:
           - name: LOCATION
 
       # -----------------------------------------------------------------------
-      # ATS (Greenhouse/Ashby-shape) — application records, captured pre-hire
+      # ATS (Greenhouse/Ashby-shape) - application records, captured pre-hire
       # -----------------------------------------------------------------------
       - name: RAW_ATS_CANDIDATES
         description: |
@@ -98,12 +98,12 @@ sources:
           - name: REQUISITION_JOB_TITLE
 
       # -----------------------------------------------------------------------
-      # Payroll (ADP-shape) — monthly records, lags HRIS on name updates
+      # Payroll (ADP-shape) - monthly records, lags HRIS on name updates
       # -----------------------------------------------------------------------
       - name: RAW_PAYROLL_RECORDS
         description: |
           ADP-shape monthly payroll records. Uses legal name, but does NOT
-          always pick up name changes (marriage, etc.) — a deliberate drift case.
+          always pick up name changes (marriage, etc.) - a deliberate drift case.
           Includes SIN_LAST_4 as sensitive identity anchor.
         columns:
           - name: PAYROLL_RECORD_ID
@@ -118,7 +118,7 @@ sources:
           - name: LEGAL_LAST_NAME
             tests: [not_null]
           - name: SIN_LAST_4
-            description: Sensitive — last 4 digits of SIN. Restrict access in marts.
+            description: Sensitive - last 4 digits of SIN. Restrict access in marts.
           - name: PAY_PERIOD_START
             tests: [not_null]
           - name: PAY_PERIOD_END
@@ -129,7 +129,7 @@ sources:
           - name: COST_CENTER
 
       # -----------------------------------------------------------------------
-      # CRM (Dabadu-shape) — sales-floor activity, preferred name
+      # CRM (Dabadu-shape) - sales-floor activity, preferred name
       # -----------------------------------------------------------------------
       - name: RAW_CRM_SALES_REPS
         description: |
@@ -155,7 +155,7 @@ sources:
           - name: DEACTIVATED_AT
 
       # -----------------------------------------------------------------------
-      # DMS (PBS-shape) — shortened first name typed-in-once
+      # DMS (PBS-shape) - shortened first name typed-in-once
       # -----------------------------------------------------------------------
       - name: RAW_DMS_USERS
         description: |
@@ -178,12 +178,12 @@ sources:
           - name: TERMINATED_DATE_DMS
 
       # -----------------------------------------------------------------------
-      # ERP — mirrors DMS but with broken FK link 10% of the time
+      # ERP - mirrors DMS but with broken FK link 10% of the time
       # -----------------------------------------------------------------------
       - name: RAW_ERP_USERS
         description: |
           ERP user records. Mostly mirrors DMS, but ~10% of LINKED_DMS_USER_IDs
-          are NULL — modeling real-world manual data drift where the DMS-ERP
+          are NULL - modeling real-world manual data drift where the DMS-ERP
           link is broken.
         columns:
           - name: ERP_USER_ID

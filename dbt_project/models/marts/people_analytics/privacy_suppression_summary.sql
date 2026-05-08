@@ -6,7 +6,7 @@
 }}
 
 -- =============================================================================
--- privacy_suppression_summary — Phase 3 privacy observability
+-- privacy_suppression_summary - Phase 3 privacy observability
 -- =============================================================================
 -- Summarizes how often each public People Analytics mart suppresses metrics.
 -- This gives reviewers a quick way to see whether k-anonymity is doing real

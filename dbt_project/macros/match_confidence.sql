@@ -1,18 +1,18 @@
 {#-
 ============================================================================
-  match_confidence — three macros that codify the locked Phase 2C scoring
+  match_confidence - three macros that codify the locked Phase 2C scoring
 ============================================================================
 
   These macros emit SQL expressions that compute, per candidate match:
 
-    1. match_score          — additive confidence in [0.0, 1.0]
-    2. match_anchor_count   — count of medium-or-stronger independent anchors
-    3. auto_merge_qualified — boolean: passes the >=0.95 score AND >=2 anchor
+    1. match_score          - additive confidence in [0.0, 1.0]
+    2. match_anchor_count   - count of medium-or-stronger independent anchors
+    3. auto_merge_qualified - boolean: passes the >=0.95 score AND >=2 anchor
                               floor (or is a Pass-0 structural FK)
 
   Anchors and weights below mirror the locked table in
   `~/.claude/.../memory/phase_2c_anchor_table.md`. Edit weights ONLY by
-  updating the memory and the int_match_audit_log doc together — the
+  updating the memory and the int_match_audit_log doc together - the
   numbers are load-bearing and every change should be defensible.
 
   Anchor weights:
@@ -30,7 +30,7 @@
   short-circuits to score = 1.0 and bypasses the anchor count check, because
   it is a deterministic FK rather than a probabilistic match.
 
-  Caller usage — pass the BOOLEAN EXPRESSION as a string for each anchor that
+  Caller usage - pass the BOOLEAN EXPRESSION as a string for each anchor that
   applies. Anchors that don't apply for a given pass can be omitted (they
   default to 'false'):
 
@@ -48,7 +48,7 @@
       ) }} as match_anchor_count
 
   Yes, the same expressions get repeated. The alternative is a single macro
-  that emits multiple columns at once — possible via {%- set ... -%} in a
+  that emits multiple columns at once - possible via {%- set ... -%} in a
   parent CTE, but it sacrifices SQL readability. The repetition is the
   honest trade.
 -#}
@@ -89,7 +89,7 @@ end
 {#- =====================================================================
     match_anchor_count
     Counts only medium-or-stronger independent anchors. hire_date +/- 30d
-    alone does NOT count toward this — it's too weak (matches ~10% of
+    alone does NOT count toward this - it's too weak (matches ~10% of
     population for any given target hire_date).
 ========================================================================= -#}
 

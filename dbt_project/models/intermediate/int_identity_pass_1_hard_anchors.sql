@@ -6,7 +6,7 @@
 }}
 
 -- =============================================================================
--- int_identity_pass_1_hard_anchors — government/email anchors
+-- int_identity_pass_1_hard_anchors - government/email anchors
 -- =============================================================================
 -- Pass 1 is reserved for high-certainty anchors:
 --

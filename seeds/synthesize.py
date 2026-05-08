@@ -3,7 +3,7 @@ Atlas synthetic data generator.
 
 Generates a realistic, time-evolved population of synthetic employees and
 projects them into six operational source systems with deliberate name and
-identity drift — exactly the kind of mess a real People Analytics function
+identity drift - exactly the kind of mess a real People Analytics function
 inherits from the operational world.
 
 Pipeline:
@@ -62,7 +62,7 @@ logging.basicConfig(
 log = logging.getLogger("synthesize")
 
 # -----------------------------------------------------------------------------
-# Constants — calibrated to roughly match the 401-style dealership population
+# Constants - calibrated to roughly match the 401-style dealership population
 # -----------------------------------------------------------------------------
 COMPANY_EMAIL_DOMAIN = "atlas-co.com"
 
@@ -101,7 +101,7 @@ LOCATIONS = [
     ("CAL", "Calgary, AB"),
     ("OTT", "Ottawa, ON"),
     ("WAT", "Waterloo, ON"),
-    ("REM", "Remote — Canada"),
+    ("REM", "Remote - Canada"),
 ]
 
 EMPLOYMENT_TYPES = ["FTE", "FTE", "FTE", "FTE", "CONTRACTOR", "PART_TIME"]  # weighted
@@ -340,7 +340,7 @@ def _project_hris(
             current_hire_date = None
 
         elif ev.event_type == LifecycleEventType.REHIRE:
-            # Rehire creates a NEW HRIS_EMPLOYEE_ID — this is realistic and
+            # Rehire creates a NEW HRIS_EMPLOYEE_ID - this is realistic and
             # exactly the canonical-record-survives-rehires problem we want.
             rehire_count += 1
             current_hris_id = _id_for_system("HRIS", identity.person_id, f"_R{rehire_count}")
@@ -367,7 +367,7 @@ def _project_hris(
                     "HRIS", identity.person_id, f"_FTE"
                 )
 
-    # If no termination event was emitted, the person is still active —
+    # If no termination event was emitted, the person is still active -
     # write the current open spell now.
     if current_hire_date is not None:
         rows.append({

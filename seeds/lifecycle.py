@@ -1,7 +1,7 @@
 """
 Lifecycle event generation for the Atlas synthetic dataset.
 
-The hard part of canonical-employee-record matching is not the snapshot view —
+The hard part of canonical-employee-record matching is not the snapshot view -
 it's what happens *over time*:
 
     - Sarah Kim gets married → Sarah Kim-Patel → Sarah Patel (HRIS updated, DMS not)
@@ -42,7 +42,7 @@ class LifecycleEvent:
     person_id: str
     event_type: LifecycleEventType
     event_date: date
-    # Free-form payload — interpretation depends on event_type
+    # Free-form payload - interpretation depends on event_type
     payload: dict = field(default_factory=dict)
 
 

@@ -20,7 +20,7 @@ clean-targets:
   - "logs"
 
 # -----------------------------------------------------------------------------
-# Variables — overridable from CLI with `dbt run --vars '{...}'`
+# Variables - overridable from CLI with `dbt run --vars '{...}'`
 # -----------------------------------------------------------------------------
 vars:
   # Privacy: minimum cohort size for any aggregated metric to be returned.
@@ -35,7 +35,7 @@ vars:
   snapshot_as_of_date: null
 
 # -----------------------------------------------------------------------------
-# Model defaults — staging is views (cheap, always fresh), marts are tables
+# Model defaults - staging is views (cheap, always fresh), marts are tables
 # (cached, fast for downstream queries). Intermediate is ephemeral by default
 # but can be materialized as table for inspection during development.
 # -----------------------------------------------------------------------------
@@ -73,7 +73,7 @@ models:
         +schema: people_analytics
 
 # -----------------------------------------------------------------------------
-# Seed defaults — for any reference CSVs we add later (e.g., NICKNAME_MAP)
+# Seed defaults - for any reference CSVs we add later (e.g., NICKNAME_MAP)
 # -----------------------------------------------------------------------------
 seeds:
   atlas:

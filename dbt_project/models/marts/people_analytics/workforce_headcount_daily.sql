@@ -6,7 +6,7 @@
 }}
 
 -- =============================================================================
--- workforce_headcount_daily — privacy-preserving daily headcount
+-- workforce_headcount_daily - privacy-preserving daily headcount
 -- =============================================================================
 -- Public People Analytics mart for daily active headcount by common HRBP
 -- dimensions. Exact metrics are suppressed when the cohort size is below

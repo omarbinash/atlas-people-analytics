@@ -6,7 +6,7 @@
 }}
 
 -- =============================================================================
--- fct_workforce_daily — Phase 2D daily point-in-time workforce snapshot
+-- fct_workforce_daily - Phase 2D daily point-in-time workforce snapshot
 -- =============================================================================
 -- One row per employee spell per calendar date from hire date through either:
 --

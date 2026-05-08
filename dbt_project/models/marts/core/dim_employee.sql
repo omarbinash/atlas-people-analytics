@@ -6,7 +6,7 @@
 }}
 
 -- =============================================================================
--- dim_employee — Phase 2D core SCD2-style employee dimension
+-- dim_employee - Phase 2D core SCD2-style employee dimension
 -- =============================================================================
 -- One row per canonical person employment spell. This is the effective-dated
 -- employee dimension that downstream point-in-time facts join to.

@@ -1,5 +1,5 @@
 -- =============================================================================
--- Atlas — Raw Source Tables
+-- Atlas - Raw Source Tables
 -- =============================================================================
 -- Five source systems, each with a different name representation strategy
 -- (the realistic mess we are about to model and resolve).
@@ -13,7 +13,7 @@ USE DATABASE ATLAS;
 USE SCHEMA RAW;
 
 -- -----------------------------------------------------------------------------
--- HRIS (BambooHR-shape) — legal first + last name, source of truth for employment
+-- HRIS (BambooHR-shape) - legal first + last name, source of truth for employment
 -- -----------------------------------------------------------------------------
 CREATE OR REPLACE TABLE RAW_HRIS_EMPLOYEES (
     HRIS_EMPLOYEE_ID         VARCHAR(32)   NOT NULL,
@@ -35,7 +35,7 @@ CREATE OR REPLACE TABLE RAW_HRIS_EMPLOYEES (
 );
 
 -- -----------------------------------------------------------------------------
--- ATS (Greenhouse-shape) — preferred name, only knows people from hire to start date
+-- ATS (Greenhouse-shape) - preferred name, only knows people from hire to start date
 -- -----------------------------------------------------------------------------
 CREATE OR REPLACE TABLE RAW_ATS_CANDIDATES (
     ATS_CANDIDATE_ID         VARCHAR(32)   NOT NULL,
@@ -52,7 +52,7 @@ CREATE OR REPLACE TABLE RAW_ATS_CANDIDATES (
 );
 
 -- -----------------------------------------------------------------------------
--- Payroll (ADP-shape) — legal name, includes SIN/last-4 (sensitive!)
+-- Payroll (ADP-shape) - legal name, includes SIN/last-4 (sensitive!)
 -- -----------------------------------------------------------------------------
 CREATE OR REPLACE TABLE RAW_PAYROLL_RECORDS (
     PAYROLL_RECORD_ID        VARCHAR(32)   NOT NULL,
@@ -70,7 +70,7 @@ CREATE OR REPLACE TABLE RAW_PAYROLL_RECORDS (
 );
 
 -- -----------------------------------------------------------------------------
--- CRM (Dabadu-shape) — preferred name, captures sales-floor activity
+-- CRM (Dabadu-shape) - preferred name, captures sales-floor activity
 -- -----------------------------------------------------------------------------
 CREATE OR REPLACE TABLE RAW_CRM_SALES_REPS (
     CRM_USER_ID              VARCHAR(32)   NOT NULL,
@@ -87,7 +87,7 @@ CREATE OR REPLACE TABLE RAW_CRM_SALES_REPS (
 );
 
 -- -----------------------------------------------------------------------------
--- DMS (PBS-shape) — shortened first name, deal flow + commissions
+-- DMS (PBS-shape) - shortened first name, deal flow + commissions
 -- This is the system that mirrors into the ERP
 -- -----------------------------------------------------------------------------
 CREATE OR REPLACE TABLE RAW_DMS_USERS (
@@ -103,7 +103,7 @@ CREATE OR REPLACE TABLE RAW_DMS_USERS (
 );
 
 -- -----------------------------------------------------------------------------
--- ERP (custom) — mirrors DMS but adds an internal user_id and audit trail
+-- ERP (custom) - mirrors DMS but adds an internal user_id and audit trail
 -- -----------------------------------------------------------------------------
 CREATE OR REPLACE TABLE RAW_ERP_USERS (
     ERP_USER_ID              VARCHAR(32)   NOT NULL,

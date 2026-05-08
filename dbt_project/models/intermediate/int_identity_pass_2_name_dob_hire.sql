@@ -6,7 +6,7 @@
 }}
 
 -- =============================================================================
--- int_identity_pass_2_name_dob_hire — normalized name + DOB + hire proximity
+-- int_identity_pass_2_name_dob_hire - normalized name + DOB + hire proximity
 -- =============================================================================
 -- Pass 2 implements the locked deterministic rule:
 --

@@ -1,6 +1,6 @@
 {#-
 ============================================================================
-  Privacy macros — Phase 3
+  Privacy macros - Phase 3
 ============================================================================
   Reusable SQL snippets for k-anonymity enforcement and privacy audit logging.
 
